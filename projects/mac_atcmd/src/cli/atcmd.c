@@ -1807,6 +1807,7 @@ void atwificbfunc(WIFI_RSP *msg)
     {
         printf("%s OK\n", ATCMD_DISCONNECT);
     }
+	printf("wifi status:%d\r\nreason:%d\r\ncode:%d\r\n",msg->wifistatus,msg->reason,msg->code);
 }
 
 int At_Reboot (stParam *param)

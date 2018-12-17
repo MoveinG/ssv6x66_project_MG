@@ -15,6 +15,8 @@
 #include "netstack_def.h"
 #include "uart/drv_uart.h"
 #include "rf/rf_api.h"
+//#include "app_uart.h"
+#include "at_cmd.h"
 
 void Cli_Task( void *args );
 
@@ -131,7 +133,10 @@ void APP_Init(void)
 	{
 		FS_remove_prevota(fs_handle);
 	}
+    //add by eaton at 2018.9.20
+	Serial2WiFiInit();
 
+	//add end
 #if 1
     OS_TaskCreate(Cli_Task, "cli", 1024, NULL, 1, NULL);
 #endif
