@@ -8,7 +8,7 @@
  *
  * AT Command string must be upper case letters
  ******************************************************************************/
-#define   AT_CMD_PREFIX                             "AT#"      //AT#
+#define   AT_CMD_PREFIX                             "AT+"      //AT#
 
 /* AT command type */
 /* AT#UART -B115200 -D8 -S1 -P0 */
@@ -128,6 +128,8 @@
 
 #define   MDNS_MESSAGE                               "mDNS message"
 
+#define   AT_FUNC_PARAMS_MAX_NUM                     5
+#define   AT_FUNC_PARAMS_MAX_LEN                     10
 
 typedef int32_t (*ATcmdProcessMsg_t)(uint8_t *pBuf,uint16_t len,uint8_t max_para,uint8_t *rsp);
 
@@ -233,5 +235,8 @@ extern void Serial2WiFiInit(void);
 extern void CIBInit(void);
 extern void AppUartProcessing(uint8_t *data,uint16_t len);
 extern void CmdUartRspStatus(int32_t status);
+//获取字符串中的函数参数
+void at_command_param_parse(uint8_t* cmd,uint8_t len,uint8_t params[AT_FUNC_PARAMS_MAX_NUM][AT_FUNC_PARAMS_MAX_LEN]);
+
 
 #endif

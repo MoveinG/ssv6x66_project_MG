@@ -1,5 +1,3 @@
-
-
 #include "stdint.h"
 #include "soc_types.h"
 #include "mac_cfg.h"
@@ -9,10 +7,20 @@
 #include "app_uart.h"
 
 
-atcmd_mode_t AtCmdMode = TRANSMIT_MODE;
-ConfigIB_t CIB;
 
+#define SUCCESS           1
+#define ERROR             0
+
+
+
+ConfigIB_t CIB;
 extern SSV_FS fs_handle;
+atcmd_mode_t AtCmdMode = TRANSMIT_MODE;
+char atcmdExclusiveChar[] = {' ','-','!','$'};
+char atcmdExclusiveCharLen = sizeof(atcmdExclusiveChar)/sizeof(atcmdExclusiveChar[0]);
+
+
+
 
 const atcmd_info_t atcmd_info[] = 
 {
@@ -25,14 +33,18 @@ const atcmd_info_t atcmd_info[] =
 
 };
 
+
+
 void Serial2WiFiInit(void);
 SSV_FILE CIBRead(void);
 void CIBInit(void);
 void CmdUartRspStatus(int32_t status);
 void AppUartProcessing(uint8_t *data,uint16_t len);
 uint8_t lower2upper(uint8_t data);
-int32_t FindFuncIdx(uint8_t *cmd,uint8_t len);
+int32_t find_func_Idx(uint8_t *cmd,uint8_t len);
 int32_t ATCmdProcessing(uint8_t *buf,uint16_t len);
+void atcmd_lower2upper(char* buf,int length);
+
 
 
 /*****************************************************************************
@@ -122,7 +134,6 @@ void CIBInit(void)
   uint8_t mac_addr[MAC_ADDR_LEN_MAX] = {0};
   wifi_cfg_get_addr1(cfg_handle, (char *)&mac_addr);
   wifi_cfg_deinit(cfg_handle);
-  //printf("%s=%02X:%02X:%02X:%02X:%02X:%02X\n", ATCMD_RADIO_READ_MAC1, (uint8_t)mac_addr[0], (uint8_t)mac_addr[1], (uint8_t)mac_addr[2], (uint8_t)mac_addr[3], (uint8_t)mac_addr[4], (uint8_t)mac_addr[5]);
   memset(CIB.apinfo.ssid,0,SSID_STRINGS_MAX);
   memset(CIB.apinfo.seckey,0,SECURE_KEY_MAX);
   snprintf(CIB.apinfo.ssid,SSID_STRINGS_MAX,AP_SSID_DEFAULT,mac_addr[4],mac_addr[5]);
@@ -188,32 +199,20 @@ void CmdUartRspStatus(int32_t status)
 ******************************************************************************/
 void AppUartProcessing(uint8_t *data,uint16_t len)
 {
-   int32_t status;
+  	int32_t status;
 
-   if(AtCmdMode == ATCMD_MODE)
-   {
-
-      status = ATCmdProcessing(data,len);
-      CmdUartRspStatus(status);
-   }
-   else if(AtCmdMode == TRANSMIT_MODE)
-   {
-      printf("transmit mode\r\n");
-
-   }
+	printf("uartBuf:%s\r\n",data);
+   	if(AtCmdMode == ATCMD_MODE)
+  	{
+      	status = ATCmdProcessing(data,len);
+      	CmdUartRspStatus(status);
+   	}
+   	else if(AtCmdMode == TRANSMIT_MODE)
+   	{
+      	printf("transmit mode\r\n");
+   	}
 }
 
-/*****************************************************************************
-*
-* low2cap
-*
-* @param  data-lower case
-*
-* @return capital letter data
-*
-* @brief  Convert lowercase to capital letter
-*
-******************************************************************************/
 uint8_t lower2upper(uint8_t data)
 {
     if((data >= 'a') && (data <= 'z'))
@@ -223,33 +222,112 @@ uint8_t lower2upper(uint8_t data)
     return data;
 }
 
-/*******************************************************************************
-*
-* FindFuncIdx
-*
-* @param *cmd-at command
-*        len-at command lenght
-*
-* @return CMD_ERROR is not found function index;Other is function index.
-*
-* @brief Find function index
-*
-******************************************************************************/
-int32_t FindFuncIdx(uint8_t *cmd,uint8_t len)
+void atcmd_lower2upper(char* buf,int length)
+{
+	int index = 0;
+	
+	while (length > index) {
+		*(buf+index) = lower2upper(*(buf+index));
+		index++;
+ 	}
+}
+
+void at_command_param_parse(uint8_t* cmd,uint8_t len,uint8_t params[AT_FUNC_PARAMS_MAX_NUM][AT_FUNC_PARAMS_MAX_LEN])
+{
+	uint8_t* pcmdH = NULL;
+	uint8_t* pcmdT = NULL;
+	uint8_t length   = 0;
+	uint8_t paramNum = 0;
+	uint8_t paramLen = 0;
+	
+	pcmdH = strchr(cmd,'=');
+	pcmdT = strchr(cmd,',');
+	
+	length = pcmdH - cmd + 1;
+	
+	while ((pcmdT) && (length < len)) {
+		paramLen = pcmdT - pcmdH - 1;
+		length  += paramLen + 1;
+		
+		memcpy(params[paramNum],pcmdH+1, paramLen);
+		
+		pcmdH = pcmdT;
+		pcmdT = strchr(pcmdH+1,',');
+		paramNum += 1;
+	}
+	
+	if (pcmdH) {
+		pcmdT = strchr(cmd,'\r');
+		paramLen = pcmdT - pcmdH - 1;
+		memcpy(params[paramNum],pcmdH+1, paramLen);
+	}
+}
+
+int atcmd_tail_correct(char* buf,int length)
+{
+	int ret = -1;
+	if ((length > 5) && (buf[length - 2] == CR_ID) && (buf[length - 1] == LF_ID)) {
+		ret = SUCCESS;
+	}
+	return ret;
+}
+
+int atcmd_head_correct(char* buf,int length)
+{
+	int ret = -1;
+	if (!(memcmp(buf,AT_CMD_PREFIX,strlen(AT_CMD_PREFIX))))  {
+		ret = SUCCESS;
+	}
+	return ret;
+}
+
+
+int atcmd_format_correct(char* buf,int length)
+{
+	int ret    = -1;
+	int index  = 0;
+	char* pBuf = NULL;
+
+	pBuf = buf;
+
+	if ((atcmd_head_correct(buf,length) != SUCCESS) ||\
+		(!atcmd_tail_correct(buf,length)) != SUCCESS) {
+		return ret;
+	}
+
+	//Error exclusion character
+	while (length--) {
+		while (index < atcmdExclusiveCharLen) {
+			if (*pBuf == atcmdExclusiveChar[index]) {
+				break;
+			}
+			index++;
+		}
+		if ((*pBuf == CR_ID) && (*(pBuf+1) == LF_ID)) {
+			ret = 1;
+			break;
+		}
+		pBuf++;
+		index = 0;
+	}
+	return ret;
+}
+
+int32_t find_func_Idx(uint8_t *cmd,uint8_t len)
 {
     uint8_t i;
 	uint8_t num;
 
     num = sizeof(atcmd_info)/sizeof(atcmd_info_t);
-    for(i = 0;i < num;i++)
-    {
-    	if((!(memcmp(cmd,atcmd_info[i].atCmd,len))) && (len == (strlen((const char *)atcmd_info[i].atCmd))))
-    	{
+    for (i = 0;i < num;i++) {
+		if (!(memcmp(cmd,atcmd_info[i].atCmd,strlen((const char *)atcmd_info[i].atCmd)))) {
     		return i;
     	}
     }
     return CMD_ERROR;
 }
+
+
 /*****************************************************************************
 *
 * ATCmdProcessing
@@ -263,58 +341,25 @@ int32_t FindFuncIdx(uint8_t *cmd,uint8_t len)
 ******************************************************************************/
 int32_t ATCmdProcessing(uint8_t *buf,uint16_t len)
 {
-    int32_t status = CMD_ERROR;
-    uint8_t *p;
     uint8_t *pcmd;
-    uint8_t cmd_len = 0;
-    uint8_t read_flg = 0;
-    uint8_t data_len = 0;
-	int cmd_func_idx;
-    static uint8_t rsp_data[100];
+	int cmdFuncIdx;
+	int32_t status = CMD_ERROR;
+    static uint8_t rsp_data[100] = {0};
 
-	if((len > 5) && (buf[len - 2] == CR_ID) && (buf[len - 1] == LF_ID))
-	{
-		p = buf;
-		*p = lower2upper(*p);
-		p++;
-		*p = lower2upper(*p);
-		p += 2;
-		if(!(memcmp(buf,AT_CMD_PREFIX,strlen(AT_CMD_PREFIX))))
-		{
-			len -= strlen(AT_CMD_PREFIX);
-			data_len = len;
-			pcmd = p;
-			while(len--)
-			{
-				if((*p == ' ') || (*p == '-'))
-				{
-					break;
-				}
-				else if((*p == CR_ID) && (*(p+1) == LF_ID))
-				{
-					read_flg = 1;
-					break;
-				}
-				*p = lower2upper(*p);
-				p++;
-				cmd_len++;
+	atcmd_lower2upper(buf,len);
+	
+	if (atcmd_format_correct(pcmd,len)) {
+		pcmd = buf+strlen(AT_CMD_PREFIX);
+		
+		cmdFuncIdx = find_func_Idx(pcmd,len);
+		
+		if (cmdFuncIdx != CMD_ERROR) {
+			status = atcmd_info[cmdFuncIdx].pfHandle(pcmd,len,atcmd_info[cmdFuncIdx].max_parameter,rsp_data);
+			if (status == CMD_READ_OK) {
+				app_uart_send(rsp_data,strlen(rsp_data));
 			}
-            cmd_func_idx = FindFuncIdx(pcmd,cmd_len);
-            if(cmd_func_idx != CMD_ERROR)
-            {
-                if(read_flg)
-                {
-                   pcmd = NULL;
-				   data_len = 0;
-                }
-				status = atcmd_info[cmd_func_idx].pfHandle(pcmd,data_len,atcmd_info[cmd_func_idx].max_parameter,rsp_data);
-                if(status == CMD_READ_OK)
-                {
-					app_uart_send(rsp_data,strlen(rsp_data));
-                }
-            }
+			pcmd = NULL;
 		}
-
 	}
 
 	return status;

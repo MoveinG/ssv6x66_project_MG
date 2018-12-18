@@ -51,10 +51,12 @@ void app_uart_int(void)
     //drv_hsuart_set_format(115200, HSUART_WLS_8,HSUART_STB_1 , HSUART_PARITY_DISABLE);
     app_uart_set_format(CIB.uartcfg.baudrate,CIB.uartcfg.databits,CIB.uartcfg.stopbit,CIB.uartcfg.datapaity);
 
+	printf("\r\n-----------\nbaud:%d------------\r\n",CIB.uartcfg.baudrate);	
 	drv_hsuart_register_isr(HSUART_RX_DATA_READY_IE, app_uart_isr);
 	if(OS_SemInit(&AppUartRxSem, 1, 0) == OS_SUCCESS)
 	{
-       OS_TaskCreate(app_uart_rx_task, "app uart rx task", 512, NULL, APP_UART_RX_TASK_PRIORITY, NULL);
+	    printf("\r\n-----------[%d]:%s------------\r\n",__LINE__,__func__);	
+        OS_TaskCreate(app_uart_rx_task, "app uart rx task", 512, NULL, APP_UART_RX_TASK_PRIORITY, NULL);
 	}
 	else
 	{
@@ -200,9 +202,11 @@ void app_uart_isr(void)
 ******************************************************************************/
 void app_uart_rx_task(void *pdata)
 {
-   OS_STATUS ret;
-   uint32_t last_recv_len = 0;
-   bool rx_full_flg = false;
+   	OS_STATUS ret;
+   	uint32_t last_recv_len = 0;
+   	bool rx_full_flg = false;
+    
+	printf("\r\n-----------[%d]:%s------------\r\n",__LINE__,__func__);
    
    while(1)
    {

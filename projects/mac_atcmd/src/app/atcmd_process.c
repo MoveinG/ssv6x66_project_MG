@@ -26,11 +26,20 @@ int32_t AT_ResetProcessing(uint8_t *pBuf,uint16_t len,uint8_t max_para,uint8_t *
 * @brief Uart parameter config,ex:baudrate,data bits,stop bit ,data paity
 *
 ******************************************************************************/
-int32_t AT_UartProcessing(uint8_t *pBuf,uint16_t len,uint8_t max_para,uint8_t *rsp)
+int32_t AT_UartProcessing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8_t *rsp)
 {
+	uint8_t params[AT_FUNC_PARAMS_MAX_NUM][AT_FUNC_PARAMS_MAX_LEN] = {0}; 
 
-
-   return 0;
+	at_command_param_parse(pBuf,len,params);
+	printf("\r\n-----------------\r\n");
+	printf("pBuf     :%s\r\n",pBuf);
+	printf("params[0]:%s\r\n",params[0]);
+	printf("params[1]:%s\r\n",params[1]);
+	printf("params[2]:%s\r\n",params[2]);
+	printf("params[3]:%s\r\n",params[3]);
+	printf("params[4]:%s\r\n",params[4]);
+	printf("\r\n-----------------\r\n");
+   	return 0;
 }
 
 /*****************************************************************************
@@ -47,8 +56,8 @@ int32_t AT_UartProcessing(uint8_t *pBuf,uint16_t len,uint8_t max_para,uint8_t *r
 ******************************************************************************/
 int32_t AT_ApStaProcessing(uint8_t *pBuf,uint16_t len,uint8_t max_para,uint8_t *rsp)
 {
-
-  return 0;
+	printf("\r\n----[%d]:%s-----",__LINE__,__func__);
+	return 0;
 }
 
 
@@ -66,10 +75,8 @@ int32_t AT_ApStaProcessing(uint8_t *pBuf,uint16_t len,uint8_t max_para,uint8_t *
 ******************************************************************************/
 int32_t AT_RebootProcessing(uint8_t *pBuf,uint16_t len,uint8_t max_para,uint8_t *rsp)
 {
-
-
-  return 0;
-
+	printf("\r\n----[%d]:%s-----",__LINE__,__func__);
+  	return 0;
 }
 
 
@@ -87,9 +94,8 @@ int32_t AT_RebootProcessing(uint8_t *pBuf,uint16_t len,uint8_t max_para,uint8_t 
 ******************************************************************************/
 int32_t AT_AppVerProcessing(uint8_t *pBuf,uint16_t len,uint8_t max_para,uint8_t *rsp)
 {
-
-
-   return 0;
+	printf("\r\n----[%d]:%s-----",__LINE__,__func__);
+   	return 0;
 }
 
 
@@ -134,8 +140,8 @@ int32_t AT_ExitProcessing(uint8_t *pBuf,uint16_t len,uint8_t max_para,uint8_t *r
 ******************************************************************************/
 int32_t AT_ResetProcessing(uint8_t *pBuf,uint16_t len,uint8_t max_para,uint8_t *rsp)
 {
-
-  return 0;
+	printf("\r\n----[%d]:%s-----",__LINE__,__func__);
+  	return 0;
 }
 
 
