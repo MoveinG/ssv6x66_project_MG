@@ -224,6 +224,16 @@ typedef struct
 }ConfigIB_t;
 
 
+typedef enum 
+{
+   SET_PARAM_COMMAND      = 1,
+   GET_PARAM_COMMAND      = 2,
+   GET_CURE_PARAM_COMMAND = 3,
+   ACTION_COMMAND         = 4,
+   DEFAULT                = 0xff,
+}atcmd_type_e;
+
+
 
 
 extern atcmd_mode_t AtCmdMode;
@@ -237,6 +247,11 @@ extern void AppUartProcessing(uint8_t *data,uint16_t len);
 extern void CmdUartRspStatus(int32_t status);
 //获取字符串中的函数参数
 void at_command_param_parse(uint8_t* cmd,uint8_t len,uint8_t params[AT_FUNC_PARAMS_MAX_NUM][AT_FUNC_PARAMS_MAX_LEN]);
+//获取指令类型
+atcmd_type_e atcmd_type_get(char *pcmd);
 
 
 #endif
+
+
+

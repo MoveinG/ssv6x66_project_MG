@@ -211,6 +211,7 @@ void AppUartProcessing(uint8_t *data,uint16_t len)
    	{
       	printf("transmit mode\r\n");
    	}
+	memset(data,0,APP_UART_BUF_MAX);
 }
 
 uint8_t lower2upper(uint8_t data)
@@ -328,6 +329,24 @@ int32_t find_func_Idx(uint8_t *cmd,uint8_t len)
 }
 
 
+atcmd_type_e atcmd_type_get(char *pcmd)
+{
+	atcmd_type_e cmdType = DEFAULT;
+
+	if (*(pcmd) == '?') {
+		cmdType = GET_CURE_PARAM_COMMAND;
+	} else if (*(pcmd) == '\r') {
+		cmdType = ACTION_COMMAND;
+	} else if ((*(pcmd) == '=') && (*(pcmd + 1) == '?')) {
+		cmdType = GET_PARAM_COMMAND;
+ 	} else if ((*(pcmd) == '=') && (*(pcmd + 1) != '?')) {
+		cmdType = SET_PARAM_COMMAND;
+	}
+	
+	return cmdType;
+}
+
+
 /*****************************************************************************
 *
 * ATCmdProcessing
@@ -354,7 +373,7 @@ int32_t ATCmdProcessing(uint8_t *buf,uint16_t len)
 		cmdFuncIdx = find_func_Idx(pcmd,len);
 		
 		if (cmdFuncIdx != CMD_ERROR) {
-			status = atcmd_info[cmdFuncIdx].pfHandle(pcmd,len,atcmd_info[cmdFuncIdx].max_parameter,rsp_data);
+			status = atcmd_info[cmdFuncIdx].pfHandle(pcmd+strlen(atcmd_info[cmdFuncIdx].atCmd),len,atcmd_info[cmdFuncIdx].max_parameter,rsp_data);
 			if (status == CMD_READ_OK) {
 				app_uart_send(rsp_data,strlen(rsp_data));
 			}

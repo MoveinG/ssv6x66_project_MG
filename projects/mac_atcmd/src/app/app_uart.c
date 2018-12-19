@@ -206,7 +206,6 @@ void app_uart_rx_task(void *pdata)
    	uint32_t last_recv_len = 0;
    	bool rx_full_flg = false;
     
-	printf("\r\n-----------[%d]:%s------------\r\n",__LINE__,__func__);
    
    while(1)
    {
@@ -217,6 +216,14 @@ void app_uart_rx_task(void *pdata)
          {
             if(AppUartRx->recv_len == last_recv_len)
             {
+               if (!(memcmp(AppUartRx->buf,AT_CMD_PREFIX,strlen(AT_CMD_PREFIX))) &&\
+			   	(rx_full_flg == false)) {
+			   		AtCmdMode = ATCMD_MODE;
+					AppUartProcessing(AppUartRx->buf,AppUartRx->recv_len);
+			   } else {
+			   		printf("[%d]:%s\r\n",AppUartRx->recv_len,AppUartRx->buf);
+			   }
+			   #if 0
                if((AtCmdMode == TRANSMIT_MODE) && (rx_full_flg == false) && (AppUartRx->recv_len == CMD_CHAR_NUMS) && (!memcmp(AppUartRx->buf,CMD_CHAR,CMD_CHAR_NUMS)))
                {
                   AtCmdMode = ATCMD_MODE;
@@ -228,6 +235,7 @@ void app_uart_rx_task(void *pdata)
                   AppUartProcessing(AppUartRx->buf,AppUartRx->recv_len);
 				  printf("app uart(timeout):%d\r\n",AppUartRx->recv_len);
 			   }
+			   #endif
                AppUartRx->recv_len = 0;
             }
 			last_recv_len = AppUartRx->recv_len;
