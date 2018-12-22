@@ -24,13 +24,24 @@ char atcmdExclusiveCharLen = sizeof(atcmdExclusiveChar)/sizeof(atcmdExclusiveCha
 
 const atcmd_info_t atcmd_info[] = 
 {
-    {AT_CMD_UART,AT_UartProcessing,4},
-    {AT_CMD_APSTA,AT_ApStaProcessing,1},
-    {AT_CMD_REBOOT,AT_RebootProcessing,1},
-    {AT_CMD_VER,AT_AppVerProcessing,0},
-    {AT_CMD_EXIT,AT_ExitProcessing,0},
-    {AT_CMD_RESET,AT_ResetProcessing,0},
-
+    {AT_CMD_UART,		AT_UartProcessing,			4},
+    {AT_CMD_APSTA,		AT_ApStaProcessing,			1},
+    {AT_CMD_REBOOT,		AT_RebootProcessing,		1},
+    {AT_CMD_VER,		AT_AppVerProcessing,		0},
+    {AT_CMD_EXIT,		AT_ExitProcessing,			0},
+    {AT_CMD_RESET,		AT_ResetProcessing,			0},
+    
+    {AT_CMD_SCANAP,			AT_ScanProcessing,			0},
+    {AT_CMD_SETMODE,   	 	AT_SetModeProcessing,    	1},
+    {AT_CMD_CNT_AP,     	AT_ConnectApProcessing,  	4},
+	{AT_CMD_DISCNT_AP,   	AT_DisconnectApProcessing,  0},
+	{AT_CMD_SET_AUTOCNT, 	AT_AutoConnectProcessing,  	1},
+	{AT_CMD_SET_IP_CONFIG, 	AT_SetIPConfigProcessing,  	1},
+    {AT_CMD_DHCP_DEF,		AT_DHCP_Processing,			2},
+    {AT_CMD_DEV_APIP_CFG,   AT_APIP_ConfigProcessing,	3},
+    {AT_CMD_DEV_STAIP_CFG,	AT_STAIP_ConfigProcessing,	3},
+    {AT_CMD_DEV_HOSE_NAME,	AT_Host_Name_Processing,	1},
+    {AT_CMD_DNS,			AT_Dev_DNS_Processing,		1},
 };
 
 
@@ -105,6 +116,22 @@ SSV_FILE CIBRead(void)
   }
   return fd;
 }
+
+SSV_FILE CIBWrite(void)
+{
+	SSV_FILE fd;
+
+  	fd = FS_open(fs_handle,CIB_FILE_NAME,SPIFFS_RDWR,0);
+  	//printf("%s fd=%d\r\n",__func__,fd);
+  	if(fd >= 0)
+  	{
+    	fd = FS_write(fs_handle,fd,&CIB,sizeof(CIB));
+		FS_close(fs_handle,fd);
+		printf("CIB write ok\r\n");
+  	}
+	return fd;
+}
+
 
 /*****************************************************************************
 *
@@ -251,7 +278,7 @@ void at_command_param_parse(uint8_t* cmd,uint8_t len,uint8_t params[AT_FUNC_PARA
 		length  += paramLen + 1;
 		
 		memcpy(params[paramNum],pcmdH+1, paramLen);
-		
+		params[paramNum][paramLen] = '\0';
 		pcmdH = pcmdT;
 		pcmdT = strchr(pcmdH+1,',');
 		paramNum += 1;
@@ -261,6 +288,7 @@ void at_command_param_parse(uint8_t* cmd,uint8_t len,uint8_t params[AT_FUNC_PARA
 		pcmdT = strchr(cmd,'\r');
 		paramLen = pcmdT - pcmdH - 1;
 		memcpy(params[paramNum],pcmdH+1, paramLen);
+		params[paramNum][paramLen] = '\0';
 	}
 }
 
@@ -362,8 +390,8 @@ int32_t ATCmdProcessing(uint8_t *buf,uint16_t len)
 {
     uint8_t *pcmd;
 	int cmdFuncIdx;
-	int32_t status = CMD_ERROR;
-    static uint8_t rsp_data[100] = {0};
+	int status  = CMD_ERROR;
+    uint8_t rspData[200] = {0};
 
 	atcmd_lower2upper(buf,len);
 	
@@ -373,9 +401,9 @@ int32_t ATCmdProcessing(uint8_t *buf,uint16_t len)
 		cmdFuncIdx = find_func_Idx(pcmd,len);
 		
 		if (cmdFuncIdx != CMD_ERROR) {
-			status = atcmd_info[cmdFuncIdx].pfHandle(pcmd+strlen(atcmd_info[cmdFuncIdx].atCmd),len,atcmd_info[cmdFuncIdx].max_parameter,rsp_data);
-			if (status == CMD_READ_OK) {
-				app_uart_send(rsp_data,strlen(rsp_data));
+			status = atcmd_info[cmdFuncIdx].pfHandle(pcmd+strlen(atcmd_info[cmdFuncIdx].atCmd),len,atcmd_info[cmdFuncIdx].max_parameter,rspData);
+			if ((status == CMD_SUCCESS) && (rspData[0])) {
+				app_uart_send(rspData,strlen(rspData));
 			}
 			pcmd = NULL;
 		}

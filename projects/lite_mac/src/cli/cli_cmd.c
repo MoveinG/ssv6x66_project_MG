@@ -1206,7 +1206,7 @@ const CLICmds gCliCmdTable[] =
     { "AT+EFUSE_WRITE_MAC",   At_CliEfuseWriteMAC,  "write mac to efuse"},
     { "AT+EFUSE_READ_MAC",    At_CliEfuseReadMAC,   "read mac from efuse"},
     { "AT+EFUSE_DUMP",    At_CliEfuseDump,   "dump efuse data"},
-    //rf test command
+		//rf test command
     { "AT+REBOOT",   At_CliReboot,  "system reboot"},
     { "AT+RF_START",   At_CliRFStart,  "rf tx start"},
     { "AT+RF_CHANNEL",    At_CliChannel,   "rf set channel"},

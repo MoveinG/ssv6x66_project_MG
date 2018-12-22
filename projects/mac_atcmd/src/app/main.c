@@ -72,6 +72,20 @@ void tcptask(void *args)
 
 void wifi_auto_connect_task(void *pdata)
 {  
+	if (CIB.autoConnectEn) {
+		set_auto_connect_flag(1);
+	}
+	if (CIB.deviceIpConfig.devStaIpCfg.dhcpEn == 0) {
+		uint32_t server = 0;
+		if (CIB.deviceIpConfig.devStaIpCfg.dnsEN) {
+			server = CIB.deviceIpConfig.devStaIpCfg.dns.u32;
+		}
+		set_if_config(CIB.deviceIpConfig.devStaIpCfg.dhcpEn,\
+			CIB.deviceIpConfig.devStaIpCfg.ip.u32,\
+			CIB.deviceIpConfig.devStaIpCfg.netmask.u32,\
+			CIB.deviceIpConfig.devStaIpCfg.gateway.u32,\
+			server);
+	}
     if( get_auto_connect_flag() == 1 )
     {
         printf("run wifi_auto_connect_task\n");
@@ -103,11 +117,12 @@ void temperature_compensation_task(void *pdata)
 
 void ssvradio_init_task(void *pdata)
 {
+	extern ConfigIB_t CIB;
     PBUF_Init();
     NETSTACK_RADIO.init();    
     drv_sec_init();
 #ifdef TCPIPSTACK_EN
-    netstack_init(NULL);
+    netstack_init(CIB.hostName);
 #endif
     OS_TaskDelete(NULL);
 }

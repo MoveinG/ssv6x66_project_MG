@@ -1779,12 +1779,16 @@ void scan_cbfunc()
     }
     printf("end\n");
 }
+
+extern OsTimer cntTimeOut;
+uint16_t cntErrorCode;
 void atwificbfunc(WIFI_RSP *msg)
 {
     uint8_t dhcpen;
     u8 mac[6];
     uip_ipaddr_t ipaddr, submask, gateway, dnsserver;
 
+	cntErrorCode = msg->code;
     if(msg->wifistatus == 1)
     {
         printf("%s OK\n", ATCMD_CONNECT);
@@ -1799,14 +1803,17 @@ void atwificbfunc(WIFI_RSP *msg)
         printf("default gateway - %d.%d.%d.%d\n", gateway.u8[0], gateway.u8[1], gateway.u8[2], gateway.u8[3]);
         printf("DNS server      - %d.%d.%d.%d\n", dnsserver.u8[0], dnsserver.u8[1], dnsserver.u8[2], dnsserver.u8[3]);
 
-
         recordAP();
-
+		if (cntTimeOut) {
+			OS_TimerDelete(cntTimeOut);
+			app_uart_send("OK\r\n",strlen("OK\r\n"));
+		}
     }
     else
     {
         printf("%s OK\n", ATCMD_DISCONNECT);
     }
+	
 	printf("wifi status:%d\r\nreason:%d\r\ncode:%d\r\n",msg->wifistatus,msg->reason,msg->code);
 }
 

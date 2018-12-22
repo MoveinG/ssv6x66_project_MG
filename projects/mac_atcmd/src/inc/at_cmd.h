@@ -1,5 +1,7 @@
 #ifndef AT_CMD_H
 #define AT_CMD_H
+#include "wificonf.h"
+#include "fsal.h"
 
 
 #define   SERIAL_WIFI_APP_VER                       "1.0"
@@ -54,8 +56,26 @@
 /* AT#LINK */
 #define   AT_CMD_CONNECT                            "CONNECT"		//Connect to the scan AP
 
+#define AT_CMD_SCANAP                        		"CWLAP"			//scan wifi
+#define AT_CMD_SETMODE                       		"CWMODE_DEF"	//set wifi mode and store in flash
+#define AT_CMD_CNT_AP								"CWJAP_DEF"
+#define AT_CMD_DISCNT_AP							"CWQAP"
+#define AT_CMD_SET_WIFI_PARAM						"CWSAP_DEF"
+#define AT_CMD_SET_AUTOCNT							"CWAUTOCONN"
+#define AT_CMD_SET_IP_CONFIG						"CIPDNS_DEF"
+#define AT_CMD_DHCP_DEF                             "CWDHCP_DEF"
+#define AT_CMD_DEV_APIP_CFG                         "CIPAP_DEF"
+#define AT_CMD_DEV_STAIP_CFG                        "CIPSTA_DEF"
+#define AT_CMD_DEV_HOSE_NAME						"CWHOSTNAME"
+#define AT_CMD_DNS									"CIPDNS_DEF"
+
+
+
+
+
+
 #define   RSP_OK                                    "OK\r\n"
-#define   RSP_ERR                                   "ERROR\r\n"
+#define   RSP_ERR                                   "FAIL\r\n"
 
 /*AT command ������Ƿ�,��ĸ���Դ�д��ʾ*/
 #define   SPLIT_ID                                  '-'
@@ -128,8 +148,9 @@
 
 #define   MDNS_MESSAGE                               "mDNS message"
 
-#define   AT_FUNC_PARAMS_MAX_NUM                     5
-#define   AT_FUNC_PARAMS_MAX_LEN                     10
+#define   AT_FUNC_PARAMS_MAX_NUM                     6
+#define   AT_FUNC_PARAMS_MAX_LEN                     20
+#define   HOST_NAME_MAX								 32
 
 typedef int32_t (*ATcmdProcessMsg_t)(uint8_t *pBuf,uint16_t len,uint8_t max_para,uint8_t *rsp);
 
@@ -174,6 +195,30 @@ typedef enum
 	SOCKET_SERVER,
 	SOCKET_CLIENT
 }sock_mode_t;
+
+typedef struct
+{
+	uint8_t dhcpEn;
+	uint8_t dnsEN;
+	uip_ip4addr_t ip;
+	uip_ip4addr_t gateway;
+	uip_ip4addr_t netmask;
+	uip_ip4addr_t dns;
+}deviceStaIpConfig_t;
+
+typedef struct
+{
+	uint8_t dhcpEn;
+	uip_ip4addr_t ip;
+	uip_ip4addr_t gateway;
+	uip_ip4addr_t netmask;
+}deviceApIpConfig_t;
+
+typedef struct
+{
+   deviceStaIpConfig_t devStaIpCfg;
+   deviceApIpConfig_t  devApIpCfg;
+}deviceIpConfig_t;
 
 
 typedef struct
@@ -221,6 +266,9 @@ typedef struct
    ssid_info_t apinfo;
    socket_cfg_t socketcfg[SOCKET_CHAN_MAX];
    uint8_t mDNS[MDNS_MESSAGES_MAX];
+   deviceIpConfig_t deviceIpConfig;
+   uint8_t hostName[HOST_NAME_MAX+1];
+   uint8_t autoConnectEn;
 }ConfigIB_t;
 
 
@@ -243,6 +291,7 @@ extern ConfigIB_t CIB;
 
 extern void Serial2WiFiInit(void);
 extern void CIBInit(void);
+extern SSV_FILE CIBWrite(void);
 extern void AppUartProcessing(uint8_t *data,uint16_t len);
 extern void CmdUartRspStatus(int32_t status);
 //获取字符串中的函数参数

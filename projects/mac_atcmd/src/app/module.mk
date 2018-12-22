@@ -23,6 +23,8 @@ LOCAL_INC += -I$(TOPDIR)/components/third_party/fdk_aac_dec_andes/libSYS/include
 LOCAL_INC += -I$(TOPDIR)/components/net/tcpip/lwip-1.4.0/src/include
 LOCAL_INC += -I$(TOPDIR)/components/net/tcpip/lwip-1.4.0/src/include/ipv4
 LOCAL_INC += -I$(TOPDIR)/components/net/tcpip/lwip-1.4.0/ports/icomm/include
+LOCAL_INC += -I$(TOPDIR)/projects/mac_atcmd/src/cli
+LOCAL_INC += -I$(TOPDIR)/components/softmac
 
 ifeq ($(strip $(SUPPORT_PARTITION_CFG_TABLE)), 1)
 LOCAL_INC += -I$(PROJ_DIR)/src/cfg
