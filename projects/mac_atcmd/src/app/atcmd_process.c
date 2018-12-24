@@ -138,18 +138,22 @@ int32_t AT_ConnectApProcessing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8_
     	if (pWifiKey) {
         	keyLen = strlen(pWifiKey);
     	}
-		if (params[4]) {
-			timeOutNum = atoi(params[4]);
+		if (params[4][0] != 0) {
+			timeOutNum = atoi(params[4][0]) - '0';
 		} 
 		if (cntTimeOut) {
 			OS_TimerDelete(cntTimeOut);
 			cntTimeOut = NULL;
 		}
 		if (timeOutNum != 0) {
-			if (OS_TimerCreate(&cntTimeOut,timeOutNum, (unsigned char)0, NULL, (OsTimerHandler)connect_timeout_handler) != OS_SUCCESS) {
+			printf("connect ap timer create!\r\n");
+			if (OS_TimerCreate(&cntTimeOut,timeOutNum*1000, (unsigned char)1, NULL, (OsTimerHandler)connect_timeout_handler) != OS_SUCCESS) {
 				printf("connect ap timer create error!\r\n");
+				return CMD_ERROR;
 			}
+			OS_TimerStart(cntTimeOut);
 		}
+		printf("11111111111111111111params[4][0]:%c \r\n",params[4][0]);
 		if (get_DUT_wifi_mode() != DUT_STA) {
 			DUT_wifi_start(DUT_STA);
 		}

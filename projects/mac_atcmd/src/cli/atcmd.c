@@ -1807,8 +1807,8 @@ void atwificbfunc(WIFI_RSP *msg)
         recordAP();
 		if (cntTimeOut) {
 			OS_TimerDelete(cntTimeOut);
+			app_uart_send("OK\r\n",strlen("OK\r\n"));
 		}
-		app_uart_send("OK\r\n",strlen("OK\r\n"));
     }
     else
     {
