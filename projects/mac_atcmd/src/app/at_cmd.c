@@ -71,8 +71,7 @@ void atcmd_lower2upper(char* buf,int length);
 void Serial2WiFiInit(void)
 {
   	SSV_FILE fd;
-
-	CIBInit();
+	
 	fd = CIBRead();
 	printf("fd:%d\r\n",fd);
 	app_uart_int();
@@ -99,12 +98,17 @@ SSV_FILE CIBRead(void)
   if(fd >= 0)
   {
     fd = FS_read(fs_handle,fd,&CIB,sizeof(CIB));
+	if (CIB.magic != DEV_MAGIC) {
+		CIBInit();
+		FS_write(fs_handle,fd,&CIB,sizeof(CIB));
+	}
 	FS_close(fs_handle,fd);
 	printf("CIB read ok\r\n");
 	//return fd;
   }
   else
   {
+  	CIBInit();
     fd = FS_open(fs_handle,CIB_FILE_NAME,SPIFFS_CREAT | SPIFFS_RDWR,0);
 	if(fd >= 0)
     {
@@ -146,6 +150,7 @@ SSV_FILE CIBWrite(void)
 void CIBInit(void)
 {
   //UART parameter default
+  CIB.magic = DEV_MAGIC;
   CIB.uartcfg.baudrate = UART_DEFAULT_BAUDRATE;
   CIB.uartcfg.databits = UART_DEFAULT_DATABITS;
   CIB.uartcfg.stopbit = UART_DEFAULT_STOPBIT;
@@ -186,20 +191,20 @@ void CIBInit(void)
   memset(CIB.socketcfg[0].addr.url,0,URL_MAX);
   CIB.socketcfg[1].port = SOCKET2_PORT_NUM;
 
-  #if 0
+  #if 1
   CIB.autoConnectEn = 1;
-  CIB.hostName      = 0;
-  CIB.deviceIpConfig.devApIpCfg.dhcpEn   = 1;
-  CIB.deviceIpConfig.devApIpCfg.gateway  = 0;
-  CIB.deviceIpConfig.devApIpCfg.ip       = 0;
-  CIB.deviceIpConfig.devApIpCfg.netmask  = 0;
+  memset(CIB.hostName,0,HOST_NAME_MAX+1);
+  CIB.deviceIpConfig.devApIpCfg.dhcpEn   	 = 1;
+  CIB.deviceIpConfig.devApIpCfg.gateway.u32  = 0;
+  CIB.deviceIpConfig.devApIpCfg.ip.u32       = 0;
+  CIB.deviceIpConfig.devApIpCfg.netmask.u32  = 0;
   
-  CIB.deviceIpConfig.devStaIpCfg.dhcpEn  = 1;
-  CIB.deviceIpConfig.devStaIpCfg.dns     = 0;
-  CIB.deviceIpConfig.devStaIpCfg.dnsEN   = 0;
-  CIB.deviceIpConfig.devStaIpCfg.gateway = 0;
-  CIB.deviceIpConfig.devStaIpCfg.ip      = 0;
-  CIB.deviceIpConfig.devStaIpCfg.netmask = 0;
+  CIB.deviceIpConfig.devStaIpCfg.dhcpEn  	 = 1;
+  CIB.deviceIpConfig.devStaIpCfg.dns.u32     = 0;
+  CIB.deviceIpConfig.devStaIpCfg.dnsEN   	 = 0;
+  CIB.deviceIpConfig.devStaIpCfg.gateway.u32 = 0;
+  CIB.deviceIpConfig.devStaIpCfg.ip.u32      = 0;
+  CIB.deviceIpConfig.devStaIpCfg.netmask.u32 = 0;
   #endif
 }
 

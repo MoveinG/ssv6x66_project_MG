@@ -3,7 +3,7 @@
 #include "wificonf.h"
 #include "fsal.h"
 
-
+#define   DEV_MAGIC                                 20181224
 #define   SERIAL_WIFI_APP_VER                       "1.0"
 /******************************************************************************
  * MACRO DEFINITION  for AT Comamnd
@@ -260,6 +260,7 @@ typedef struct
 
 typedef struct
 {
+   uint32_t magic;
    uart_parameter_t uartcfg;
    wifi_mode_t wifimode;
    ssid_info_t stainfo;
