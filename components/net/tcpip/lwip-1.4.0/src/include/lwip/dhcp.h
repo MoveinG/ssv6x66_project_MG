@@ -95,7 +95,7 @@ struct dhcp_msg
   PACK_STRUCT_FIELD(u8_t sname[DHCP_SNAME_LEN]);
   PACK_STRUCT_FIELD(u8_t file[DHCP_FILE_LEN]);
   PACK_STRUCT_FIELD(u32_t cookie);
-#define DHCP_MIN_OPTIONS_LEN 50U
+#define DHCP_MIN_OPTIONS_LEN 80U
 /** make sure user does not configure this too small */
 #if ((defined(DHCP_OPTIONS_LEN)) && (DHCP_OPTIONS_LEN < DHCP_MIN_OPTIONS_LEN))
 #  undef DHCP_OPTIONS_LEN
