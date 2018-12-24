@@ -114,7 +114,7 @@ void connect_timeout_handler(void)
 	printf("connect ap timeout cntErrorCode:%d!\r\n",cntErrorCode);
 	sprintf(rsp,"+CWJAP_DEF:%d\r\n",cntErrorCode);
 	app_uart_send(rsp,strlen(rsp));
-	app_uart_send(FAIL,strlen(FAIL));
+	app_uart_send(RSP_FAIL,strlen(RSP_FAIL));
 }
 
 int32_t AT_ConnectApProcessing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8_t *rsp)
