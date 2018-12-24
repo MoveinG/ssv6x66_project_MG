@@ -114,7 +114,7 @@ void connect_timeout_handler(void)
 	printf("connect ap timeout cntErrorCode:%d!\r\n",cntErrorCode);
 	sprintf(rsp,"+CWJAP_DEF:%d\r\n",cntErrorCode);
 	app_uart_send(rsp,strlen(rsp));
-	app_uart_send(RSP_ERR,strlen(RSP_ERR));
+	app_uart_send(FAIL,strlen(FAIL));
 }
 
 int32_t AT_ConnectApProcessing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8_t *rsp)
@@ -156,7 +156,7 @@ int32_t AT_ConnectApProcessing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8_
 		if (CIB.deviceIpConfig.devStaIpCfg.dhcpEn == 0) {
 			set_if_config(CIB.deviceIpConfig.devStaIpCfg.dhcpEn, CIB.deviceIpConfig.devStaIpCfg.ip.u32, CIB.deviceIpConfig.devStaIpCfg.netmask.u32, CIB.deviceIpConfig.devStaIpCfg.gateway.u32, 0);
 		}
-		wifi_disconnect(atwificbfunc);
+		wifi_disconnect(NULL);
 		vTaskDelay(100);
 		if (wifi_connect_active ( pSsid, ssidLen, pWifiKey, keyLen, atwificbfunc) == 0) {
 			printf("pSsid:%s,pWifiKey:%s\r\n",pSsid,pWifiKey);
@@ -228,38 +228,6 @@ int32_t AT_AutoConnectProcessing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint
     return CMD_ERROR;
 }
 
-int32_t AT_SetIPConfigProcessing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8_t *rsp)
-{
-	atcmd_type_e cmdType = DEFAULT;
-	uint8_t params[AT_FUNC_PARAMS_MAX_NUM][AT_FUNC_PARAMS_MAX_LEN] = {0}; 
-
-	printf("\r\n[%s]:[%d] cmd:%s\r\n",__func__,__LINE__,pBuf);
-	
-	cmdType = atcmd_type_get(pBuf);
-	if (cmdType == ACTION_COMMAND) {
-		wifi_disconnect(atwificbfunc);
-		return CMD_SUCCESS;
-	}
-
-	return CMD_SUCCESS;
-}
-
-int32_t AT_GetNetParamProcessing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8_t *rsp)
-{
-	atcmd_type_e cmdType = DEFAULT;
-	uint8_t params[AT_FUNC_PARAMS_MAX_NUM][AT_FUNC_PARAMS_MAX_LEN] = {0}; 
-
-	printf("\r\n[%s]:[%d] cmd:%s\r\n",__func__,__LINE__,pBuf);
-	
-	cmdType = atcmd_type_get(pBuf);
-	if (cmdType == ACTION_COMMAND) {
-		get_wifi_status();
-		return CMD_SUCCESS;
-	}
-
-    return CMD_SUCCESS;
-}
-
 int32_t AT_DHCP_Processing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8_t *rsp)
 {
 	atcmd_type_e cmdType = DEFAULT;
@@ -270,17 +238,17 @@ int32_t AT_DHCP_Processing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8_t *r
 	cmdType = atcmd_type_get(pBuf);
 	if (cmdType == SET_PARAM_COMMAND) {
 		at_command_param_parse(pBuf,len,params);
-		if (params[0][0] == '0') {
-			CIB.deviceIpConfig.devApIpCfg.dhcpEn = params[0][1] - '0';
+		if ((params[0][0] == '0') && (params[1][0] != 0)) {
+			CIB.deviceIpConfig.devApIpCfg.dhcpEn = params[1][0] - '0';
 			CIBWrite();
 			return CMD_SUCCESS;
-		} else if (params[0][0] == '1') {
-			CIB.deviceIpConfig.devStaIpCfg.dhcpEn = params[0][1] - '0';
+		} else if ((params[0][0] == '1') && (params[1][0] != 0)) {
+			CIB.deviceIpConfig.devStaIpCfg.dhcpEn = params[1][0] - '0';
 			CIBWrite();
 			return CMD_SUCCESS;
 		}
 	} else if (cmdType == GET_CURE_PARAM_COMMAND) {
-		sprintf(rsp,"+CWDHCP_DEF:%d",CIB.deviceIpConfig.devApIpCfg.dhcpEn|(CIB.deviceIpConfig.devStaIpCfg.dhcpEn << 1));
+		sprintf(rsp,"+CWDHCP_DEF:%d\r\n",CIB.deviceIpConfig.devApIpCfg.dhcpEn|(CIB.deviceIpConfig.devStaIpCfg.dhcpEn << 1));
 		return CMD_SUCCESS;
 	}
     return CMD_ERROR;
@@ -366,21 +334,25 @@ int32_t AT_Host_Name_Processing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8
 	uint8_t params[AT_FUNC_PARAMS_MAX_NUM][AT_FUNC_PARAMS_MAX_LEN] = {0}; 
 	
 	printf("\r\n[%s]:[%d] cmd:%s\r\n",__func__,__LINE__,pBuf);
-		
+
+	if (get_DUT_wifi_mode() != DUT_STA) {
+		return CMD_ERROR;
+	}
+			
 	cmdType = atcmd_type_get(pBuf);
 	if (cmdType == SET_PARAM_COMMAND) {
 		at_command_param_parse(pBuf,len,params);
-		if (params[0][0] == '0') {
+		if (params[0][0] != 0) {
 			memset(CIB.hostName,0,HOST_NAME_MAX+1);
 			memcpy(CIB.hostName,params[0],strlen(params[0]));
 			CIBWrite();
 			return CMD_SUCCESS;
 		}
 	} else if (cmdType == GET_CURE_PARAM_COMMAND) {
-			sprintf(rsp,"+CWHOSTNAME:%s",CIB.hostName);
+			sprintf(rsp,"+CWHOSTNAME:%s\r\n",CIB.hostName);
 			return CMD_SUCCESS;
 	}
-		return CMD_ERROR;
+	return CMD_ERROR;
 }
 
 int32_t AT_Dev_DNS_Processing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8_t *rsp)
@@ -404,7 +376,7 @@ int32_t AT_Dev_DNS_Processing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8_t
 		CIBWrite();
 		return CMD_SUCCESS;
 	} else if (cmdType == GET_CURE_PARAM_COMMAND) {
-		sprintf(rsp,"+CIPDNS_DEF:%d,\"%d.%d.%d.%d\"",CIB.deviceIpConfig.devStaIpCfg.dnsEN,\
+		sprintf(rsp,"+CIPDNS_DEF:%d,\"%d.%d.%d.%d\"\r\n",CIB.deviceIpConfig.devStaIpCfg.dnsEN,\
 			CIB.deviceIpConfig.devStaIpCfg.dns.u8[0],\
 			CIB.deviceIpConfig.devStaIpCfg.dns.u8[1],\
 			CIB.deviceIpConfig.devStaIpCfg.dns.u8[2],\

@@ -20,7 +20,6 @@ int32_t AT_DisconnectApProcessing(uint8_t *pBuf,uint16_t len,uint8_t max_para,ui
 //int32_t AT_GetWifiParamProcessing(uint8_t *pBuf,uint16_t len,uint8_t max_para,uint8_t *rsp);
 //int32_t AT_SetApNameProcessing(uint8_t *pBuf,uint16_t len,uint8_t max_para,uint8_t *rsp);
 int32_t AT_AutoConnectProcessing(uint8_t *pBuf,uint16_t len,uint8_t max_para,uint8_t *rsp);
-int32_t AT_SetIPConfigProcessing(uint8_t *pBuf,uint16_t len,uint8_t max_para,uint8_t *rsp);
 int32_t AT_DHCP_Processing(uint8_t *pBuf,uint16_t len,uint8_t max_para,uint8_t *rsp);
 int32_t AT_APIP_ConfigProcessing(uint8_t *pBuf,uint16_t len,uint8_t max_para,uint8_t *rsp);
 int32_t AT_STAIP_ConfigProcessing(uint8_t *pBuf,uint16_t len,uint8_t max_para,uint8_t *rsp);

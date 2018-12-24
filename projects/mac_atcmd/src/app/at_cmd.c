@@ -36,7 +36,6 @@ const atcmd_info_t atcmd_info[] =
     {AT_CMD_CNT_AP,     	AT_ConnectApProcessing,  	4},
 	{AT_CMD_DISCNT_AP,   	AT_DisconnectApProcessing,  0},
 	{AT_CMD_SET_AUTOCNT, 	AT_AutoConnectProcessing,  	1},
-	{AT_CMD_SET_IP_CONFIG, 	AT_SetIPConfigProcessing,  	1},
     {AT_CMD_DHCP_DEF,		AT_DHCP_Processing,			2},
     {AT_CMD_DEV_APIP_CFG,   AT_APIP_ConfigProcessing,	3},
     {AT_CMD_DEV_STAIP_CFG,	AT_STAIP_ConfigProcessing,	3},

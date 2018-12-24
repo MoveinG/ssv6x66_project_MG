@@ -62,7 +62,6 @@
 #define AT_CMD_DISCNT_AP							"CWQAP"
 #define AT_CMD_SET_WIFI_PARAM						"CWSAP_DEF"
 #define AT_CMD_SET_AUTOCNT							"CWAUTOCONN"
-#define AT_CMD_SET_IP_CONFIG						"CIPDNS_DEF"
 #define AT_CMD_DHCP_DEF                             "CWDHCP_DEF"
 #define AT_CMD_DEV_APIP_CFG                         "CIPAP_DEF"
 #define AT_CMD_DEV_STAIP_CFG                        "CIPSTA_DEF"
@@ -75,7 +74,8 @@
 
 
 #define   RSP_OK                                    "OK\r\n"
-#define   RSP_ERR                                   "FAIL\r\n"
+#define   RSP_FAIL                                  "FAIL\r\n"
+#define   RSP_ERR                                   "ERROR\r\n"
 
 /*AT command ������Ƿ�,��ĸ���Դ�д��ʾ*/
 #define   SPLIT_ID                                  '-'
