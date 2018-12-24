@@ -150,11 +150,16 @@ int32_t AT_ConnectApProcessing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8_
 				printf("connect ap timer create error!\r\n");
 			}
 		}
-		DUT_wifi_start(DUT_STA);
+		if (get_DUT_wifi_mode() != DUT_STA) {
+			DUT_wifi_start(DUT_STA);
+		}
 		if (CIB.deviceIpConfig.devStaIpCfg.dhcpEn == 0) {
 			set_if_config(CIB.deviceIpConfig.devStaIpCfg.dhcpEn, CIB.deviceIpConfig.devStaIpCfg.ip.u32, CIB.deviceIpConfig.devStaIpCfg.netmask.u32, CIB.deviceIpConfig.devStaIpCfg.gateway.u32, 0);
 		}
+		wifi_disconnect(atwificbfunc);
+		vTaskDelay(100);
 		if (wifi_connect_active ( pSsid, ssidLen, pWifiKey, keyLen, atwificbfunc) == 0) {
+			printf("pSsid:%s,pWifiKey:%s\r\n",pSsid,pWifiKey);
 			return CMD_NO_RESPONSE;
 		}
 	} else if (cmdType == GET_CURE_PARAM_COMMAND) {

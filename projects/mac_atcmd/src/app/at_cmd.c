@@ -186,7 +186,22 @@ void CIBInit(void)
   CIB.socketcfg[1].addr.ip = 0;
   memset(CIB.socketcfg[0].addr.url,0,URL_MAX);
   CIB.socketcfg[1].port = SOCKET2_PORT_NUM;
+
+  #if 0
+  CIB.autoConnectEn = 1;
+  CIB.hostName      = 0;
+  CIB.deviceIpConfig.devApIpCfg.dhcpEn   = 1;
+  CIB.deviceIpConfig.devApIpCfg.gateway  = 0;
+  CIB.deviceIpConfig.devApIpCfg.ip       = 0;
+  CIB.deviceIpConfig.devApIpCfg.netmask  = 0;
   
+  CIB.deviceIpConfig.devStaIpCfg.dhcpEn  = 1;
+  CIB.deviceIpConfig.devStaIpCfg.dns     = 0;
+  CIB.deviceIpConfig.devStaIpCfg.dnsEN   = 0;
+  CIB.deviceIpConfig.devStaIpCfg.gateway = 0;
+  CIB.deviceIpConfig.devStaIpCfg.ip      = 0;
+  CIB.deviceIpConfig.devStaIpCfg.netmask = 0;
+  #endif
 }
 
 
@@ -393,7 +408,7 @@ int32_t ATCmdProcessing(uint8_t *buf,uint16_t len)
 	int status  = CMD_ERROR;
     uint8_t rspData[200] = {0};
 
-	atcmd_lower2upper(buf,len);
+	atcmd_lower2upper(buf,2);
 	
 	if (atcmd_format_correct(pcmd,len)) {
 		pcmd = buf+strlen(AT_CMD_PREFIX);

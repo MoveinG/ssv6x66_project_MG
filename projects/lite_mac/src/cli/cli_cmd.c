@@ -1092,7 +1092,7 @@ void atwificbfunc(WIFI_RSP *msg)
     uint8_t dhcpen;
     u8 mac[6];
     uip_ipaddr_t ipaddr, submask, gateway, dnsserver;
-
+	
     if(msg->wifistatus == 1)
     {
         printf("connect OK\n");

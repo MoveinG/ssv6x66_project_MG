@@ -1788,6 +1788,7 @@ void atwificbfunc(WIFI_RSP *msg)
     u8 mac[6];
     uip_ipaddr_t ipaddr, submask, gateway, dnsserver;
 
+	printf("\r\n----------------[%d]:[%s]-----------------\r\n",__LINE__,__func__);
 	cntErrorCode = msg->code;
     if(msg->wifistatus == 1)
     {
@@ -1806,8 +1807,8 @@ void atwificbfunc(WIFI_RSP *msg)
         recordAP();
 		if (cntTimeOut) {
 			OS_TimerDelete(cntTimeOut);
-			app_uart_send("OK\r\n",strlen("OK\r\n"));
 		}
+		app_uart_send("OK\r\n",strlen("OK\r\n"));
     }
     else
     {
