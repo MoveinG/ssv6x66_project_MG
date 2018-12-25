@@ -938,12 +938,19 @@ static int x509_get_current_time( mbedtls_x509_time *now )
         ret = -1;
     else
     {
-        now->year = lt->tm_year + 1900;
-        now->mon  = lt->tm_mon  + 1;
-        now->day  = lt->tm_mday;
-        now->hour = lt->tm_hour;
-        now->min  = lt->tm_min;
-        now->sec  = lt->tm_sec;
+//        now->year = lt->tm_year + 1970;
+//        now->mon  = lt->tm_mon  + 1;
+//        now->day  = lt->tm_mday;
+//        now->hour = lt->tm_hour;
+//        now->min  = lt->tm_min;
+//        now->sec  = lt->tm_sec;
+	      now->year = 2018;
+	      now->mon  = 12;
+	      now->day  = 7;
+	      now->hour = 2;
+	      now->min  = 0;
+	      now->sec  = 0;
+
     }
 
 #if defined(MBEDTLS_THREADING_C)

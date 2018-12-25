@@ -171,7 +171,7 @@ int mbedtls_platform_entropy_poll( void *data,
 #endif /* HAVE_GETRANDOM */
 
     *olen = 0;
-
+#if 0
     file = fopen( "/dev/urandom", "rb" );
     if( file == NULL )
         return( MBEDTLS_ERR_ENTROPY_SOURCE_FAILED );
@@ -184,6 +184,16 @@ int mbedtls_platform_entropy_poll( void *data,
     }
 
     fclose( file );
+#else
+	int i;
+	unsigned long rand;
+	for(i=0; i+3<len; i+=sizeof(unsigned long))
+	{
+		extern unsigned long OS_Random(void);
+		rand = OS_Random();
+		memcpy(output+i, &rand, sizeof(unsigned long));
+	}
+#endif
     *olen = len;
 
     return( 0 );

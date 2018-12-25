@@ -12,6 +12,7 @@ endif
 ifeq ($(strip $(SUPPORT_PARTITION_CFG_TABLE)), 1)
 LIB_SRC += atcmd_cfg.c
 endif
+LIB_SRC += ssl_client1.c
 
 LIB_ASRC :=
 LIBRARY_NAME := cli
@@ -44,5 +45,6 @@ endif
 ifeq ($(strip $(SUPPORT_PARTITION_CFG_TABLE)), 1)
 LOCAL_INC += -I$(PROJ_DIR)/src/cfg
 endif
+LOCAL_INC += -I$(TOPDIR)/components/third_party/mbedtls/include
 
 $(eval $(call build-lib,$(LIBRARY_NAME),$(LIB_SRC),$(LIB_ASRC),$(LOCAL_CFLAGS),$(LOCAL_INC),$(LOCAL_AFLAGS),$(MYDIR)))

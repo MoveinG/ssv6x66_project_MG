@@ -221,6 +221,7 @@ unsigned long mbedtls_timing_hardclock( void )
 
 static int hardclock_init = 0;
 static struct timeval tv_init;
+extern int iperf_gettimeofday(struct timeval *tv, void *tz);
 
 unsigned long mbedtls_timing_hardclock( void )
 {
@@ -228,11 +229,11 @@ unsigned long mbedtls_timing_hardclock( void )
 
     if( hardclock_init == 0 )
     {
-        gettimeofday( &tv_init, NULL );
+        iperf_gettimeofday( &tv_init, NULL );
         hardclock_init = 1;
     }
 
-    gettimeofday( &tv_cur, NULL );
+    iperf_gettimeofday( &tv_cur, NULL );
     return( ( tv_cur.tv_sec  - tv_init.tv_sec  ) * 1000000
           + ( tv_cur.tv_usec - tv_init.tv_usec ) );
 }
@@ -289,7 +290,7 @@ unsigned long mbedtls_timing_get_timer( struct mbedtls_timing_hr_time *val, int 
     struct timeval offset;
     struct _hr_time *t = (struct _hr_time *) val;
 
-    gettimeofday( &offset, NULL );
+    iperf_gettimeofday( &offset, NULL );
 
     if( reset )
     {
