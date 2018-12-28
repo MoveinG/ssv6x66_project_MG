@@ -4,11 +4,18 @@
 #include "atcmd.h"
 #include "wificonf.h"
 #include "osal.h"
+#include "ssl_client1.h"
+#include "sw_version.h"
+#include "app_tcpip.h"
+
+
 
 
 
 extern IEEE80211STATUS gwifistatus;
 OsTimer cntTimeOut = NULL;
+deviceComm_t deviceCommMsg;
+
 
 
 
@@ -18,12 +25,30 @@ extern void scan_cbfunc(void);
 
 
 
+
 int32_t AT_UartProcessing(uint8_t *pBuf,uint16_t len,uint8_t max_para,uint8_t *rsp);
 int32_t AT_ApStaProcessing(uint8_t *pBuf,uint16_t len,uint8_t max_para,uint8_t *rsp);
 int32_t AT_RebootProcessing(uint8_t *pBuf,uint16_t len,uint8_t max_para,uint8_t *rsp);
 int32_t AT_AppVerProcessing(uint8_t *pBuf,uint16_t len,uint8_t max_para,uint8_t *rsp);
 int32_t AT_ExitProcessing(uint8_t *pBuf,uint16_t len,uint8_t max_para,uint8_t *rsp);
 int32_t AT_ResetProcessing(uint8_t *pBuf,uint16_t len,uint8_t max_para,uint8_t *rsp);
+
+int32_t AT_Device_Msg_Processing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8_t *rsp)
+{
+	atcmd_type_e cmdType = DEFAULT;
+	uint8_t params[AT_FUNC_PARAMS_MAX_NUM][AT_FUNC_PARAMS_MAX_LEN] = {0}; 
+
+	printf("\r\n[%s]:[%d] cmd:%s\r\n",__func__,__LINE__,pBuf);
+	
+	cmdType = atcmd_type_get(pBuf);
+	if (cmdType == ACTION_COMMAND) {
+		sprintf(rsp,"+GMR=%s,%s,%s %s\r\n",AT_VERSION,version,__DATE__,__TIME__);
+		return CMD_SUCCESS;
+	}
+    
+    return CMD_ERROR;	
+}
+
 
 void scan_cb_func()
 {
@@ -63,7 +88,6 @@ int32_t AT_ScanProcessing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8_t *rs
 	
 	cmdType = atcmd_type_get(pBuf);
 	if (cmdType == ACTION_COMMAND) {
-		at_command_param_parse(pBuf,len,params);
 		if ((get_DUT_wifi_mode() == DUT_NONE) ||\
 			(get_DUT_wifi_mode() == DUT_SNIFFER)) {
         	printf("\nPlease run AT+DUT_START=1 first\n");
@@ -72,6 +96,7 @@ int32_t AT_ScanProcessing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8_t *rs
         	return CMD_NO_RESPONSE;
     	}
 	} else if (cmdType == SET_PARAM_COMMAND) {
+		at_command_param_parse(pBuf,len,params);
 		//scan special wifi
 	}
     
@@ -90,7 +115,7 @@ int32_t AT_SetModeProcessing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8_t 
 	if (cmdType == SET_PARAM_COMMAND) {
 		at_command_param_parse(pBuf,len,params);
 		deviceMode = params[0][0] - '0';
-		if (deviceMode > 5) {
+		if ((deviceMode > 5) || (strlen(params[0]) > 1)) {
 			return CMD_ERROR;
 		}
 		DUT_wifi_start(deviceMode);
@@ -138,7 +163,10 @@ int32_t AT_ConnectApProcessing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8_
     	if (pWifiKey) {
         	keyLen = strlen(pWifiKey);
     	}
-		if (params[4][0] != 0) {
+		if ((keyLen >= AT_FUNC_PARAMS_MAX_LEN) || (ssidLen >= AT_FUNC_PARAMS_MAX_LEN)) {
+			return CMD_ERROR;
+		}
+		if ((params[4][0] != 0) && (strlen(params[4]) < AT_FUNC_PARAMS_MAX_LEN)) {
 			params[4][strlen(params[4])] = '\0';
 			timeOutNum = atoi(params[4]);
 		} 
@@ -158,6 +186,7 @@ int32_t AT_ConnectApProcessing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8_
 			DUT_wifi_start(DUT_STA);
 		}
 		if (CIB.deviceIpConfig.devStaIpCfg.dhcpEn == 0) {
+			printf("-------------11111----------------");
 			set_if_config(CIB.deviceIpConfig.devStaIpCfg.dhcpEn, CIB.deviceIpConfig.devStaIpCfg.ip.u32, CIB.deviceIpConfig.devStaIpCfg.netmask.u32, CIB.deviceIpConfig.devStaIpCfg.gateway.u32, 0);
 		}
 		wifi_disconnect(NULL);
@@ -220,13 +249,15 @@ int32_t AT_AutoConnectProcessing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint
 	cmdType = atcmd_type_get(pBuf);
 	if (cmdType == SET_PARAM_COMMAND) {
 		at_command_param_parse(pBuf,len,params);
-		if ((params[0][0] == '0') ||\
-			(params[0][0] == '1')) {
-			//set_auto_connect_flag(params[0][0] - '0');
+		if (((params[0][0] == '0') || (params[0][0] == '1')) &&\
+			(strlen(params[0]) == 1)) {
 			CIB.autoConnectEn = params[0][0] - '0';
 			CIBWrite();
 			return CMD_SUCCESS;
 		}
+	} else if (cmdType == GET_CURE_PARAM_COMMAND) {
+		sprintf(rsp,"+CWAUTOCONN:%d\r\n",CIB.autoConnectEn);
+		return CMD_SUCCESS;
 	}
 
     return CMD_ERROR;
@@ -242,6 +273,11 @@ int32_t AT_DHCP_Processing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8_t *r
 	cmdType = atcmd_type_get(pBuf);
 	if (cmdType == SET_PARAM_COMMAND) {
 		at_command_param_parse(pBuf,len,params);
+		if ((strlen(params[0]) > 1) ||\
+			(strlen(params[1]) > 1) ||\
+			(strlen(params[2]) != 0)) {
+			return CMD_ERROR;
+		}
 		if ((params[0][0] == '0') && (params[1][0] != 0)) {
 			CIB.deviceIpConfig.devApIpCfg.dhcpEn = params[1][0] - '0';
 			CIBWrite();
@@ -268,6 +304,12 @@ int32_t AT_APIP_ConfigProcessing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint
 	cmdType = atcmd_type_get(pBuf);
 	if (cmdType == SET_PARAM_COMMAND) {
 		at_command_param_parse(pBuf,len,params);
+		if ((strlen(params[0]) > 15) ||\
+			(strlen(params[1]) > 15) ||\
+			(strlen(params[2]) > 15) ||\
+			(strlen(params[3]) != 0)) {
+			return CMD_ERROR;
+		}
 		ip2int(params[0],&(CIB.deviceIpConfig.devApIpCfg.ip));
 		ip2int(params[1],&(CIB.deviceIpConfig.devApIpCfg.gateway));
 		ip2int(params[2],&(CIB.deviceIpConfig.devApIpCfg.netmask));
@@ -302,6 +344,12 @@ int32_t AT_STAIP_ConfigProcessing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uin
 	cmdType = atcmd_type_get(pBuf);
 	if (cmdType == SET_PARAM_COMMAND) {
 		at_command_param_parse(pBuf,len,params);
+		if ((strlen(params[0]) > 15) ||\
+			(strlen(params[1]) > 15) ||\
+			(strlen(params[2]) > 15) ||\
+			(strlen(params[3]) != 0)) {
+			return CMD_ERROR;
+		}
 		ip2int(params[0],&(CIB.deviceIpConfig.devStaIpCfg.ip));
 		ip2int(params[1],&(CIB.deviceIpConfig.devStaIpCfg.gateway));
 		ip2int(params[2],&(CIB.deviceIpConfig.devStaIpCfg.netmask));
@@ -346,7 +394,7 @@ int32_t AT_Host_Name_Processing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8
 	cmdType = atcmd_type_get(pBuf);
 	if (cmdType == SET_PARAM_COMMAND) {
 		at_command_param_parse(pBuf,len,params);
-		if (params[0][0] != 0) {
+		if ((params[0][0] != 0) && (strlen(params[0]) <= HOST_NAME_MAX)) {
 			memset(CIB.hostName,0,HOST_NAME_MAX+1);
 			memcpy(CIB.hostName,params[0],strlen(params[0]));
 			CIBWrite();
@@ -387,7 +435,147 @@ int32_t AT_Dev_DNS_Processing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8_t
 			CIB.deviceIpConfig.devStaIpCfg.dns.u8[3]);
 		return CMD_SUCCESS;
 	}
-		return CMD_ERROR;
+	return CMD_ERROR;
+}
+
+int32_t AT_Test_SSL_Processing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8_t *rsp)
+{
+	atcmd_type_e cmdType = DEFAULT;
+	uint8_t params[AT_FUNC_PARAMS_MAX_NUM][AT_FUNC_PARAMS_MAX_LEN] = {0}; 
+	
+	printf("\r\n[%s]:[%d] cmd:%s\r\n",__func__,__LINE__,pBuf);
+		
+	cmdType = atcmd_type_get(pBuf);
+	if (cmdType == ACTION_COMMAND) {
+		ssl_test_init();
+		return CMD_SUCCESS;
+	}
+	return CMD_ERROR;
+}
+
+int32_t AT_Cfg_SendIp_Processing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8_t *rsp)
+{
+	uint32_t port = 0;
+	uip_ip4addr_t ipaddr;
+	atcmd_type_e cmdType = DEFAULT;
+	uint8_t params[AT_FUNC_PARAMS_MAX_NUM][AT_FUNC_PARAMS_MAX_LEN] = {0}; 
+	
+	printf("\r\n[%s]:[%d] cmd:%s\r\n",__func__,__LINE__,pBuf);
+		
+	cmdType = atcmd_type_get(pBuf);
+	if (cmdType == SET_PARAM_COMMAND) {
+		at_command_param_parse(pBuf,len,params);
+		ip2int(params[1],&(ipaddr));
+		port = atoi(params[2]);
+		if ((port <= 0) || (port > 0xffff)) {
+			return CMD_ERROR;
+		}
+		if (memcmp(params[0],"TCP",strlen("TCP") == 0)) {
+			if (deviceCommMsg.commTcp.magic != DEV_MAGIC) {
+				deviceCommMsg.commTcp.ip    = ipaddr;
+				deviceCommMsg.commTcp.port  = port;
+				if (app_tcp_create(&(deviceCommMsg.commTcp)) != 1) {
+					printf("[%d]:tcp communication create failure!\r\n");
+					return CMD_ERROR;
+				}
+				if ((deviceCommMsg.commTcp.id != -1) &&\
+					(deviceCommMsg.commTcp.magic == DEV_MAGIC)) {
+					return CMD_SUCCESS;
+				}
+			} else {
+				app_uart_send("ALREADY CONNECTED\r\n",strlen("ALREADY CONNECTED\r\n"));
+				return CMD_NO_RESPONSE;
+			}
+		} else if (memcmp(params[0],"UDP",strlen("UDP") == 0)) {
+			if (deviceCommMsg.commUdp.magic != DEV_MAGIC) {
+				//deviceCommMsg.commUdp.id = create_udp_communication();
+				if (deviceCommMsg.commUdp.id != -1) {
+					deviceCommMsg.commUdp.magic = DEV_MAGIC;
+					deviceCommMsg.commUdp.ip    = ipaddr;
+					deviceCommMsg.commUdp.port  = port;
+					return CMD_SUCCESS;
+				}
+			} else {
+				app_uart_send("ALREADY CONNECTED\r\n",strlen("ALREADY CONNECTED\r\n"));
+				return CMD_NO_RESPONSE;
+			}
+		} else if (memcmp(params[0],"SSL",strlen("SSL") == 0)) {
+			if (deviceCommMsg.commSsl.magic != DEV_MAGIC) {
+				deviceCommMsg.commSsl.ip    = ipaddr;
+				deviceCommMsg.commSsl.port  = port;
+				app_ssl_create(&(deviceCommMsg.commSsl));
+				if ((deviceCommMsg.commSsl.id != -1) &&\
+					(deviceCommMsg.commSsl.magic == DEV_MAGIC)) {
+					return CMD_SUCCESS;
+				}
+			} else {
+				app_uart_send("ALREADY CONNECTED\r\n",strlen("ALREADY CONNECTED\r\n"));
+				return CMD_NO_RESPONSE;
+			}
+		}
+	}
+	return CMD_ERROR;
+}
+
+int32_t AT_Send_Data_Processing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8_t *rsp)
+{
+	atcmd_type_e cmdType = DEFAULT;
+	uint8_t params[AT_FUNC_PARAMS_MAX_NUM][AT_FUNC_PARAMS_MAX_LEN] = {0}; 
+	
+	printf("\r\n[%s]:[%d] cmd:%s\r\n",__func__,__LINE__,pBuf);
+		
+	cmdType = atcmd_type_get(pBuf);
+	if (cmdType == SET_PARAM_COMMAND) {
+		at_command_param_parse(pBuf,len,params);
+		len = atoi(params[0]);
+		if (len) {
+			if (params[1][0] == 0) {
+				if (deviceCommMsg.commTcp.magic == DEV_MAGIC) {
+					deviceCommMsg.commTcp.sendBufLen = len;
+					app_uart_send("\r\n>",strlen("\r\n>"));
+					return CMD_NO_RESPONSE;
+				} else if (deviceCommMsg.commSsl.magic == DEV_MAGIC) {
+					deviceCommMsg.commSsl.sendBufLen = len;
+					app_uart_send("\r\n>",strlen("\r\n>"));
+					return CMD_NO_RESPONSE;
+				}
+				return CMD_ERROR;
+			} else if (deviceCommMsg.commUdp.magic == DEV_MAGIC) {
+				deviceCommMsg.commUdp.sendBufLen = len;
+				app_uart_send("\r\n>",strlen("\r\n>"));
+				return CMD_NO_RESPONSE;
+			}
+		}
+	}
+	return CMD_ERROR;
+}
+int32_t AT_Close_Comm_Processing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8_t *rsp)
+{
+	comm_t* commType;
+	atcmd_type_e cmdType = DEFAULT;
+	uint8_t params[AT_FUNC_PARAMS_MAX_NUM][AT_FUNC_PARAMS_MAX_LEN] = {0}; 
+	
+	printf("\r\n[%s]:[%d] cmd:%s\r\n",__func__,__LINE__,pBuf);
+		
+	cmdType = atcmd_type_get(pBuf);
+	if (cmdType == ACTION_COMMAND) {
+		if (deviceCommMsg.commTcp.magic == DEV_MAGIC) {
+			*commType = deviceCommMsg.commTcp;
+			app_tcp_close(commType);
+			deviceCommMsg.commTcp.magic = 0;
+		}
+		if (deviceCommMsg.commUdp.magic == DEV_MAGIC) {
+			//close_comm_udp();
+			deviceCommMsg.commUdp.magic = 0;
+		}
+		if (deviceCommMsg.commSsl.magic == DEV_MAGIC) {
+			*commType = deviceCommMsg.commSsl;
+			app_ssl_close(commType);
+			deviceCommMsg.commSsl.magic = 0;
+		}
+		return CMD_SUCCESS;
+	}
+	return CMD_ERROR;
 }
 
 

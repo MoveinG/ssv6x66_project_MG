@@ -5,6 +5,7 @@
 #include "at_cmd.h"
 #include "atcmd_process.h"
 #include "app_uart.h"
+#include "ssl_client1.h"
 
 
 
@@ -41,7 +42,13 @@ const atcmd_info_t atcmd_info[] =
     {AT_CMD_DEV_STAIP_CFG,	AT_STAIP_ConfigProcessing,	3},
     {AT_CMD_DEV_HOSE_NAME,	AT_Host_Name_Processing,	1},
     {AT_CMD_DNS,			AT_Dev_DNS_Processing,		1},
+    {AT_CMD_TEST_SSL,       AT_Test_SSL_Processing,		0},
+    {AT_CMD_MSG,			AT_Device_Msg_Processing,	0},
+    {AT_CMD_CIP_START,		AT_Cfg_SendIp_Processing,	3},
+    {AT_CMD_CIP_SEND,		AT_Send_Data_Processing,    4},
+    {AT_CMD_CIP_CLOSE,		AT_Close_Comm_Processing,   0},
 };
+
 
 
 
@@ -75,7 +82,7 @@ void Serial2WiFiInit(void)
 	fd = CIBRead();
 	printf("fd:%d\r\n",fd);
 	app_uart_int();
-
+	//ssl_test_init();
 }
 
 /*****************************************************************************
@@ -411,6 +418,7 @@ int32_t ATCmdProcessing(uint8_t *buf,uint16_t len)
 	int cmdFuncIdx;
 	int status  = CMD_ERROR;
     uint8_t rspData[200] = {0};
+	static uint8_t sslTestEn = 0;
 
 	atcmd_lower2upper(buf,2);
 	

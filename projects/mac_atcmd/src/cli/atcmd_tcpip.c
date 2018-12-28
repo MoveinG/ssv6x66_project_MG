@@ -1048,7 +1048,7 @@ int At_UDPSend (stParam *param)
     s_sockaddr.sin_family = AF_INET;
     s_sockaddr.sin_port = htons(peerport);
     s_sockaddr.sin_len = sizeof(s_sockaddr);
-    inet_aton(pIp, &s_sockaddr.sin_addr);;
+    inet_aton(pIp, &s_sockaddr.sin_addr);
 #endif
 		
 #ifdef TCPIP_UIP	

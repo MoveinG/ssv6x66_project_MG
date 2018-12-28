@@ -3,8 +3,11 @@
 #include "wificonf.h"
 #include "fsal.h"
 
+
+
 #define   DEV_MAGIC                                 20181224
 #define   SERIAL_WIFI_APP_VER                       "1.0"
+#define   AT_VERSION								"0.5.0"
 /******************************************************************************
  * MACRO DEFINITION  for AT Comamnd
  *
@@ -56,8 +59,8 @@
 /* AT#LINK */
 #define   AT_CMD_CONNECT                            "CONNECT"		//Connect to the scan AP
 
-#define AT_CMD_SCANAP                        		"CWLAP"			//scan wifi
-#define AT_CMD_SETMODE                       		"CWMODE_DEF"	//set wifi mode and store in flash
+#define AT_CMD_SCANAP                        		"CWLAP"			
+#define AT_CMD_SETMODE                       		"CWMODE_DEF"	
 #define AT_CMD_CNT_AP								"CWJAP_DEF"
 #define AT_CMD_DISCNT_AP							"CWQAP"
 #define AT_CMD_SET_WIFI_PARAM						"CWSAP_DEF"
@@ -67,11 +70,11 @@
 #define AT_CMD_DEV_STAIP_CFG                        "CIPSTA_DEF"
 #define AT_CMD_DEV_HOSE_NAME						"CWHOSTNAME"
 #define AT_CMD_DNS									"CIPDNS_DEF"
-
-
-
-
-
+#define AT_CMD_TEST_SSL                             "TEST_SSL"
+#define AT_CMD_MSG									"GMR"
+#define AT_CMD_CIP_START							"CIPSTART"
+#define AT_CMD_CIP_SEND								"CIPSEND"
+#define AT_CMD_CIP_CLOSE							"CIPCLOSE"
 
 #define   RSP_OK                                    "OK\r\n"
 #define   RSP_FAIL                                  "FAIL\r\n"
@@ -149,7 +152,7 @@
 #define   MDNS_MESSAGE                               "mDNS message"
 
 #define   AT_FUNC_PARAMS_MAX_NUM                     6
-#define   AT_FUNC_PARAMS_MAX_LEN                     20
+#define   AT_FUNC_PARAMS_MAX_LEN                     65
 #define   HOST_NAME_MAX								 32
 
 typedef int32_t (*ATcmdProcessMsg_t)(uint8_t *pBuf,uint16_t len,uint8_t max_para,uint8_t *rsp);
@@ -220,6 +223,23 @@ typedef struct
    deviceApIpConfig_t  devApIpCfg;
 }deviceIpConfig_t;
 
+typedef struct
+{
+	int magic;
+	int id;
+	int port;
+	int sendBufLen;
+	uip_ip4addr_t ip;
+}comm_t;
+
+typedef struct
+{
+	comm_t commTcp;
+	comm_t commUdp;
+	comm_t commSsl;
+}deviceComm_t;
+
+
 
 typedef struct
 {
@@ -286,8 +306,9 @@ typedef enum
 
 
 extern atcmd_mode_t AtCmdMode;
-//extern SSV_FS CIBFsHandle;
 extern ConfigIB_t CIB;
+extern deviceComm_t deviceCommMsg;
+
 
 
 extern void Serial2WiFiInit(void);
@@ -295,9 +316,7 @@ extern void CIBInit(void);
 extern SSV_FILE CIBWrite(void);
 extern void AppUartProcessing(uint8_t *data,uint16_t len);
 extern void CmdUartRspStatus(int32_t status);
-//获取字符串中的函数参数
 void at_command_param_parse(uint8_t* cmd,uint8_t len,uint8_t params[AT_FUNC_PARAMS_MAX_NUM][AT_FUNC_PARAMS_MAX_LEN]);
-//获取指令类型
 atcmd_type_e atcmd_type_get(char *pcmd);
 
 

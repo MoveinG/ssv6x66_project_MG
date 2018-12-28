@@ -72,8 +72,11 @@ void tcptask(void *args)
 
 void wifi_auto_connect_task(void *pdata)
 {  
+	//printf("-------------autoCntEn:%d --------------\r\n",CIB.autoConnectEn);
 	if (CIB.autoConnectEn) {
 		set_auto_connect_flag(1);
+	} else if (CIB.autoConnectEn == 0) {
+		set_auto_connect_flag(0);
 	}
 	if (CIB.deviceIpConfig.devStaIpCfg.dhcpEn == 0) {
 		uint32_t server = 0;
@@ -90,7 +93,6 @@ void wifi_auto_connect_task(void *pdata)
     {
         printf("run wifi_auto_connect_task\n");
         OS_MsDelay(3*1000);
-        printf("run wifi_auto_connect_task\n");
         DUT_wifi_start(DUT_STA);
         OS_MsDelay(1*1000);
         do_wifi_auto_connect();

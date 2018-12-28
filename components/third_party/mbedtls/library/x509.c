@@ -920,6 +920,7 @@ static int x509_get_current_time( mbedtls_x509_time *now )
     return( 0 );
 }
 #else
+
 static int x509_get_current_time( mbedtls_x509_time *now )
 {
     struct tm *lt;
@@ -930,8 +931,12 @@ static int x509_get_current_time( mbedtls_x509_time *now )
     if( mbedtls_mutex_lock( &mbedtls_threading_gmtime_mutex ) != 0 )
         return( MBEDTLS_ERR_THREADING_MUTEX_ERROR );
 #endif
-
-    tt = mbedtls_time( NULL );
+#if defined(CK_CLOUD_EN)
+    extern uint32_t mytime_get_time(void *ptime);
+    tt = mytime_get_time(NULL);
+#else
+    tt = 1544147869;//mbedtls_time( NULL );
+#endif
     lt = gmtime( &tt );
 
     if( lt == NULL )
@@ -960,6 +965,7 @@ static int x509_get_current_time( mbedtls_x509_time *now )
 
     return( ret );
 }
+
 #endif /* _WIN32 && !EFIX64 && !EFI32 */
 
 /*

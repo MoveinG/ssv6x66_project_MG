@@ -19,6 +19,7 @@ LOCAL_INC += -I$(TOPDIR)/components/netstack_wrapper
 LOCAL_INC += -I$(TOPDIR)/components/third_party/fdk_aac_dec_andes/include
 LOCAL_INC += -I$(TOPDIR)/components/third_party/fdk_aac_dec_andes/libAACdec/include
 LOCAL_INC += -I$(TOPDIR)/components/third_party/fdk_aac_dec_andes/libSYS/include
+LOCAL_INC += -I$(TOPDIR)/components/inc
 
 LOCAL_INC += -I$(TOPDIR)/components/net/tcpip/lwip-1.4.0/src/include
 LOCAL_INC += -I$(TOPDIR)/components/net/tcpip/lwip-1.4.0/src/include/ipv4

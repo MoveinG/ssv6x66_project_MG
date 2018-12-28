@@ -6,6 +6,7 @@ ifeq ($(strip $(WAC_EN)), 1)
 LIB_SRC += atcmd_homekit.c
 endif
 LIB_SRC += atcmd_tcpip.c
+LIB_SRC += app_tcpip.c
 ifeq ($(strip $(SSL_EN)), 1)
 LIB_SRC += atcmd_ssl.c
 endif
@@ -46,5 +47,6 @@ ifeq ($(strip $(SUPPORT_PARTITION_CFG_TABLE)), 1)
 LOCAL_INC += -I$(PROJ_DIR)/src/cfg
 endif
 LOCAL_INC += -I$(TOPDIR)/components/third_party/mbedtls/include
+LOCAL_INC += -I$(TOPDIR)/projects/mac_atcmd/src/inc
 
 $(eval $(call build-lib,$(LIBRARY_NAME),$(LIB_SRC),$(LIB_ASRC),$(LOCAL_CFLAGS),$(LOCAL_INC),$(LOCAL_AFLAGS),$(MYDIR)))

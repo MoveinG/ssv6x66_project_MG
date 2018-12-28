@@ -9,10 +9,15 @@
 
 
 
+#define SEND_BUF_LEN_MAX              4096
+
+
 
 AppUartRx_t AppUartRxData1/*,AppUartRxData2*/;
 AppUartRx_t *AppUartRx;
 OsSemaphore AppUartRxSem = NULL;
+char sendBuf[SEND_BUF_LEN_MAX] = {0};
+
 
 
 
@@ -40,7 +45,6 @@ void app_uart_rx_task(void *pdata);
 ******************************************************************************/
 void app_uart_int(void)
 {
-    printf("hsuart int\r\n");
 	memset(&AppUartRxData1,0,sizeof(AppUartRx_t));
 	AppUartRx = &AppUartRxData1;
     drv_hsuart_init ();
@@ -51,11 +55,11 @@ void app_uart_int(void)
     //drv_hsuart_set_format(115200, HSUART_WLS_8,HSUART_STB_1 , HSUART_PARITY_DISABLE);
     app_uart_set_format(CIB.uartcfg.baudrate,CIB.uartcfg.databits,CIB.uartcfg.stopbit,CIB.uartcfg.datapaity);
 
-	printf("\r\n-----------\nbaud:%d------------\r\n",CIB.uartcfg.baudrate);	
+	printf("\r\n-----------baud:%d------------\r\n",CIB.uartcfg.baudrate);	
 	drv_hsuart_register_isr(HSUART_RX_DATA_READY_IE, app_uart_isr);
 	if(OS_SemInit(&AppUartRxSem, 1, 0) == OS_SUCCESS)
 	{
-	    printf("\r\n-----------[%d]:%s------------\r\n",__LINE__,__func__);	
+	    //printf("\r\n-----------[%d]:%s------------\r\n",__LINE__,__func__);	
         OS_TaskCreate(app_uart_rx_task, "app uart rx task", 512, NULL, APP_UART_RX_TASK_PRIORITY, NULL);
 	}
 	else
@@ -189,6 +193,57 @@ void app_uart_isr(void)
 	}
 }
 
+
+void app_tranmission_mode(char* buf,int len)
+{
+	static int totalLen = 0;
+
+	printf("[%d]:%s\r\n",len,buf);
+	
+	if (deviceCommMsg.commSsl.sendBufLen != 0) {
+		if (deviceCommMsg.commSsl.magic == DEV_MAGIC) {
+			totalLen += len;
+			strcat(sendBuf,buf);
+			if (totalLen >= deviceCommMsg.commSsl.sendBufLen) {
+				if (app_ssl_send(sendBuf,deviceCommMsg.commSsl.sendBufLen) != -1) {
+					app_uart_send("SEND OK\r\n",strlen("SEND OK\r\n"));
+				} else {
+					app_uart_send("SEND FAIL\r\n",strlen("SEND FAIL\r\n"));
+				}
+				totalLen = 0;
+				deviceCommMsg.commSsl.sendBufLen = 0;
+			}
+		} else {
+			deviceCommMsg.commSsl.sendBufLen = 0;
+			app_uart_send("ERROR\r\n",strlen("ERROR\r\n"));
+		}
+	} else if (deviceCommMsg.commTcp.sendBufLen != 0) {
+		if (deviceCommMsg.commTcp.magic == DEV_MAGIC) {
+			totalLen += len;
+			strcat(sendBuf,buf);
+			if (totalLen >= deviceCommMsg.commTcp.sendBufLen) {
+				if (app_tcp_send(deviceCommMsg.commTcp.id,sendBuf,deviceCommMsg.commTcp.sendBufLen) != -1) {
+					app_uart_send("SEND OK\r\n",strlen("SEND OK\r\n"));
+				} else {
+					app_uart_send("SEND FAIL\r\n",strlen("SEND FAIL\r\n"));
+				}
+				totalLen = 0;
+				deviceCommMsg.commTcp.sendBufLen = 0;
+			}
+		} else {
+			deviceCommMsg.commTcp.sendBufLen = 0;
+			app_uart_send("ERROR\r\n",strlen("ERROR\r\n"));
+		}
+	}else if (deviceCommMsg.commUdp.sendBufLen != 0) {
+		//null
+	} else {
+		if (strlen(sendBuf) != 0) {
+			memset(sendBuf,0,SEND_BUF_LEN_MAX);
+		}
+	}
+}
+
+
 /*****************************************************************************
 *
 * app_uart_rx_task
@@ -206,7 +261,6 @@ void app_uart_rx_task(void *pdata)
    	uint32_t last_recv_len = 0;
    	bool rx_full_flg = false;
     
-   
    while(1)
    {
       ret = OS_SemWait(AppUartRxSem, APP_UART_RX_TIMEOUT/OS_TICK_RATE_MS);
@@ -220,22 +274,9 @@ void app_uart_rx_task(void *pdata)
 			   	(rx_full_flg == false)) {
 			   		AtCmdMode = ATCMD_MODE;
 					AppUartProcessing(AppUartRx->buf,AppUartRx->recv_len);
-			   } else {
-			   		printf("[%d]:%s\r\n",AppUartRx->recv_len,AppUartRx->buf);
+			   } else if (memcmp((AppUartRx->buf),"+++",3) != 0) {
+			   		app_tranmission_mode(AppUartRx->buf,AppUartRx->recv_len);
 			   }
-			   #if 0
-               if((AtCmdMode == TRANSMIT_MODE) && (rx_full_flg == false) && (AppUartRx->recv_len == CMD_CHAR_NUMS) && (!memcmp(AppUartRx->buf,CMD_CHAR,CMD_CHAR_NUMS)))
-               {
-                  AtCmdMode = ATCMD_MODE;
-				  CmdUartRspStatus(CMD_SUCCESS);
-                  printf("enter at cmd mode\r\n");
-               }
-			   else
-			   {
-                  AppUartProcessing(AppUartRx->buf,AppUartRx->recv_len);
-				  printf("app uart(timeout):%d\r\n",AppUartRx->recv_len);
-			   }
-			   #endif
                AppUartRx->recv_len = 0;
             }
 			last_recv_len = AppUartRx->recv_len;
