@@ -25,6 +25,9 @@ int32_t AT_APIP_ConfigProcessing(uint8_t *pBuf,uint16_t len,uint8_t max_para,uin
 int32_t AT_STAIP_ConfigProcessing(uint8_t *pBuf,uint16_t len,uint8_t max_para,uint8_t *rsp);
 int32_t AT_Host_Name_Processing(uint8_t *pBuf,uint16_t len,uint8_t max_para,uint8_t *rsp);
 int32_t AT_Dev_DNS_Processing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8_t *rsp);
+void connect_timeout_handler(void);
+
+
 
 
 

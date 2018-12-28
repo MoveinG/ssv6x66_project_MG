@@ -55,7 +55,7 @@ int32_t find_func_Idx(uint8_t *cmd,uint8_t len);
 int32_t ATCmdProcessing(uint8_t *buf,uint16_t len);
 void atcmd_lower2upper(char* buf,int length);
 
-
+extern OsTimer cntTimeOut;
 
 /*****************************************************************************
 *
@@ -75,7 +75,9 @@ void Serial2WiFiInit(void)
 	fd = CIBRead();
 	printf("fd:%d\r\n",fd);
 	app_uart_int();
-
+    if (OS_TimerCreate(&cntTimeOut,5000, (unsigned char)0, NULL, (OsTimerHandler)connect_timeout_handler) != OS_SUCCESS) {
+         printf("connect ap timer create error!\r\n");
+    }
 }
 
 /*****************************************************************************
