@@ -28,6 +28,9 @@ int32_t AT_Send_Data_Processing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8
 int32_t AT_Close_Comm_Processing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8_t *rsp);
 
 
+void connect_timeout_handler(void);
+
+
 
 
 #endif

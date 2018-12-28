@@ -170,18 +170,24 @@ int32_t AT_ConnectApProcessing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8_
 			params[4][strlen(params[4])] = '\0';
 			timeOutNum = atoi(params[4]);
 		} 
-		if (cntTimeOut) {
-			OS_TimerDelete(cntTimeOut);
-			cntTimeOut = NULL;
+		if(cntTimeOut)
+		{
+		    OS_TimerStop(cntTimeOut);
+			OS_TimerSet(cntTimeOut,(timeOutNum ? (timeOutNum*1000) : 5000),0,NULL);
+            OS_TimerStart(cntTimeOut);
 		}
-		if (timeOutNum != 0) {
-			//printf("connect ap timer value:%d!\r\n",timeOutNum);
-			if (OS_TimerCreate(&cntTimeOut,timeOutNum*1000, (unsigned char)0, NULL, (OsTimerHandler)connect_timeout_handler) != OS_SUCCESS) {
-				printf("connect ap timer create error!\r\n");
-				return CMD_ERROR;
-			}
-			printf("--------startValue:%d\r\n",OS_TimerStart(cntTimeOut));
-		}
+//		if (cntTimeOut) {
+//			OS_TimerDelete(cntTimeOut);
+//			cntTimeOut = NULL;
+//		}
+//		if (timeOutNum != 0) {
+//			//printf("connect ap timer value:%d!\r\n",timeOutNum);
+//			if (OS_TimerCreate(&cntTimeOut,timeOutNum*1000, (unsigned char)0, NULL, (OsTimerHandler)connect_timeout_handler) != OS_SUCCESS) {
+//				printf("connect ap timer create error!\r\n");
+//				return CMD_ERROR;
+//			}
+//			printf("--------startValue:%d\r\n",OS_TimerStart(cntTimeOut));
+//		}
 		if (get_DUT_wifi_mode() != DUT_STA) {
 			DUT_wifi_start(DUT_STA);
 		}
@@ -190,7 +196,7 @@ int32_t AT_ConnectApProcessing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8_
 			set_if_config(CIB.deviceIpConfig.devStaIpCfg.dhcpEn, CIB.deviceIpConfig.devStaIpCfg.ip.u32, CIB.deviceIpConfig.devStaIpCfg.netmask.u32, CIB.deviceIpConfig.devStaIpCfg.gateway.u32, 0);
 		}
 		wifi_disconnect(NULL);
-		vTaskDelay(100);
+		vTaskDelay(200);
 		if (wifi_connect_active ( pSsid, ssidLen, pWifiKey, keyLen, atwificbfunc) == 0) {
 			printf("pSsid:%s,pWifiKey:%s\r\n",pSsid,pWifiKey);
 			return CMD_NO_RESPONSE;
