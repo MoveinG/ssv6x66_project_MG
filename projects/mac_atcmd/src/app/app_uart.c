@@ -204,8 +204,9 @@ void app_tranmission_mode(char* buf,int len)
 		if (deviceCommMsg.commSsl.magic == DEV_MAGIC) {
 			totalLen += len;
 			strcat(sendBuf,buf);
-			if (totalLen >= deviceCommMsg.commSsl.sendBufLen) {
-				if (app_ssl_send(sendBuf,deviceCommMsg.commSsl.sendBufLen) != -1) {
+			if ((totalLen >= deviceCommMsg.commSsl.sendBufLen) ||\
+				(buf[len] == '\0')) {
+				if (app_ssl_send(sendBuf,((totalLen < deviceCommMsg.commSsl.sendBufLen)?totalLen:deviceCommMsg.commSsl.sendBufLen)) != -1) {
 					app_uart_send("SEND OK\r\n",strlen("SEND OK\r\n"));
 				} else {
 					app_uart_send("SEND FAIL\r\n",strlen("SEND FAIL\r\n"));

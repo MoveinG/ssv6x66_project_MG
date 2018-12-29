@@ -1,4 +1,5 @@
 #include "stdint.h"
+#include "netdb.h"
 #include "atcmd_process.h"
 #include "at_cmd.h"
 #include "atcmd.h"
@@ -7,6 +8,7 @@
 #include "ssl_client1.h"
 #include "sw_version.h"
 #include "app_tcpip.h"
+#include <string.h>
 
 
 
@@ -170,24 +172,11 @@ int32_t AT_ConnectApProcessing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8_
 			params[4][strlen(params[4])] = '\0';
 			timeOutNum = atoi(params[4]);
 		} 
-		if(cntTimeOut)
-		{
+ 		if (cntTimeOut) {
 		    OS_TimerStop(cntTimeOut);
 			OS_TimerSet(cntTimeOut,(timeOutNum ? (timeOutNum*1000) : 5000),0,NULL);
             OS_TimerStart(cntTimeOut);
 		}
-//		if (cntTimeOut) {
-//			OS_TimerDelete(cntTimeOut);
-//			cntTimeOut = NULL;
-//		}
-//		if (timeOutNum != 0) {
-//			//printf("connect ap timer value:%d!\r\n",timeOutNum);
-//			if (OS_TimerCreate(&cntTimeOut,timeOutNum*1000, (unsigned char)0, NULL, (OsTimerHandler)connect_timeout_handler) != OS_SUCCESS) {
-//				printf("connect ap timer create error!\r\n");
-//				return CMD_ERROR;
-//			}
-//			printf("--------startValue:%d\r\n",OS_TimerStart(cntTimeOut));
-//		}
 		if (get_DUT_wifi_mode() != DUT_STA) {
 			DUT_wifi_start(DUT_STA);
 		}
@@ -453,7 +442,8 @@ int32_t AT_Test_SSL_Processing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8_
 		
 	cmdType = atcmd_type_get(pBuf);
 	if (cmdType == ACTION_COMMAND) {
-		ssl_test_init();
+		//ssl_test_init();
+		app_ssl_create();
 		return CMD_SUCCESS;
 	}
 	return CMD_ERROR;
@@ -471,13 +461,14 @@ int32_t AT_Cfg_SendIp_Processing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint
 	cmdType = atcmd_type_get(pBuf);
 	if (cmdType == SET_PARAM_COMMAND) {
 		at_command_param_parse(pBuf,len,params);
-		ip2int(params[1],&(ipaddr));
 		port = atoi(params[2]);
 		if ((port <= 0) || (port > 0xffff)) {
 			return CMD_ERROR;
 		}
-		if (memcmp(params[0],"TCP",strlen("TCP") == 0)) {
+		if (memcmp(params[0],"TCP",strlen("TCP")) == 0) {
 			if (deviceCommMsg.commTcp.magic != DEV_MAGIC) {
+				memset(&(deviceCommMsg.commTcp),0,sizeof(comm_t));
+				ip2int(params[1],&(ipaddr));
 				deviceCommMsg.commTcp.ip    = ipaddr;
 				deviceCommMsg.commTcp.port  = port;
 				if (app_tcp_create(&(deviceCommMsg.commTcp)) != 1) {
@@ -492,8 +483,10 @@ int32_t AT_Cfg_SendIp_Processing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint
 				app_uart_send("ALREADY CONNECTED\r\n",strlen("ALREADY CONNECTED\r\n"));
 				return CMD_NO_RESPONSE;
 			}
-		} else if (memcmp(params[0],"UDP",strlen("UDP") == 0)) {
+		} else if (memcmp(params[0],"UDP",strlen("UDP")) == 0) {
 			if (deviceCommMsg.commUdp.magic != DEV_MAGIC) {
+				ip2int(params[1],&(ipaddr));
+				memset(&(deviceCommMsg.commUdp),0,sizeof(comm_t));
 				//deviceCommMsg.commUdp.id = create_udp_communication();
 				if (deviceCommMsg.commUdp.id != -1) {
 					deviceCommMsg.commUdp.magic = DEV_MAGIC;
@@ -505,13 +498,27 @@ int32_t AT_Cfg_SendIp_Processing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint
 				app_uart_send("ALREADY CONNECTED\r\n",strlen("ALREADY CONNECTED\r\n"));
 				return CMD_NO_RESPONSE;
 			}
-		} else if (memcmp(params[0],"SSL",strlen("SSL") == 0)) {
+		} else if (memcmp(params[0],"SSL",strlen("SSL")) == 0) {
+			printf("\r\n[%s]:[%d]\r\n",__func__,__LINE__);
 			if (deviceCommMsg.commSsl.magic != DEV_MAGIC) {
-				deviceCommMsg.commSsl.ip    = ipaddr;
+				memset(&(deviceCommMsg.commSsl),'\0',sizeof(comm_t));
+				//deviceCommMsg.commSsl.ip    = ipaddr;
+				//check domain name is't correct
+				char str[32] = {'\0'};
+				char ipStr[32] = {'\0'};
+				struct hostent *host;
+    			if((host=gethostbyname(params[1])) == NULL) {
+       				printf("[%d]:gethostbyname error\r\n",__LINE__);
+        			return CMD_ERROR;
+   				}
+				inet_ntop((host->h_addrtype),(host->h_addr_list[0]),str,sizeof(str));
+				printf("[%d]:ip=%s  port=%d\r\n",__LINE__,str,port);
+				ip2int(str,deviceCommMsg.commSsl.ip.u8);
+				memcpy(deviceCommMsg.commSsl.domainName,params[1],strlen(params[1]));
 				deviceCommMsg.commSsl.port  = port;
-				app_ssl_create(&(deviceCommMsg.commSsl));
-				if ((deviceCommMsg.commSsl.id != -1) &&\
-					(deviceCommMsg.commSsl.magic == DEV_MAGIC)) {
+				app_ssl_create();
+				vTaskDelay(200 / portTICK_RATE_MS);
+				if (deviceCommMsg.commSsl.magic == DEV_MAGIC) {
 					return CMD_SUCCESS;
 				}
 			} else {
@@ -575,8 +582,7 @@ int32_t AT_Close_Comm_Processing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint
 			deviceCommMsg.commUdp.magic = 0;
 		}
 		if (deviceCommMsg.commSsl.magic == DEV_MAGIC) {
-			*commType = deviceCommMsg.commSsl;
-			app_ssl_close(commType);
+			app_ssl_close();
 			deviceCommMsg.commSsl.magic = 0;
 		}
 		return CMD_SUCCESS;

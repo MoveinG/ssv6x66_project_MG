@@ -19,7 +19,7 @@
  *  This file is part of mbed TLS (https://tls.mbed.org)
  */
 
-
+#if 0
 #include "mbedtls/config.h"
 #include "mbedtls/platform.h"
 #include "mbedtls/net_sockets.h"
@@ -33,56 +33,14 @@
 #include <string.h>
 #include "ssl_client1.h"
 
-#define SERVER_PORT "443"
-#define SERVER_IP    "14.215.177.38"   //"114.143.22.138"
+#define SERVER_PORT   "443"
+#define SERVER_IP     "14.215.177.38"   //"114.143.22.138"
 #define SERVER_NAME   "www.baidu.com"   //"test.mosambee.in"
-#define GET_REQUEST "GET / HTTP/1.1\r\nHost:www.baidu.com\r\n\r\n"
+#define GET_REQUEST   "GET / HTTP/1.1\r\nHost:www.baidu.com\r\n\r\n"
 
-#define DEBUG_LEVEL 0
+#define DEBUG_LEVEL 2
 
-
-/*
-const char ssl_test_cas_pem[] =
-"-----BEGIN CERTIFICATE-----\r\n"
-"MIIGrzCCBZegAwIBAgIIccFup0l5XQowDQYJKoZIhvcNAQELBQAwgbQxCzAJBgNV\r\n"
-"BAYTAlVTMRAwDgYDVQQIEwdBcml6b25hMRMwEQYDVQQHEwpTY290dHNkYWxlMRow\r\n"
-"GAYDVQQKExFHb0RhZGR5LmNvbSwgSW5jLjEtMCsGA1UECxMkaHR0cDovL2NlcnRz\r\n"
-"LmdvZGFkZHkuY29tL3JlcG9zaXRvcnkvMTMwMQYDVQQDEypHbyBEYWRkeSBTZWN1\r\n"
-"cmUgQ2VydGlmaWNhdGUgQXV0aG9yaXR5IC0gRzIwHhcNMTgwNTE1MDkwODA5WhcN\r\n"
-"MjAwNTE1MDkwODA5WjA7MSEwHwYDVQQLExhEb21haW4gQ29udHJvbCBWYWxpZGF0\r\n"
-"ZWQxFjAUBgNVBAMMDSoubW9zYW1iZWUuaW4wggEiMA0GCSqGSIb3DQEBAQUAA4IB\r\n"
-"DwAwggEKAoIBAQCxpBH5sxESpszoClsksS54jkDLwFxLIl6mmZAzWZ56G5aKvtiK\r\n"
-"s0uuQ2yp2nGbAE2GtGSMwGark3dpZdg9oyferDAmmAiiPyBha8utkRMUiwVI5fl0\r\n"
-"zpVDfv8fVoREjyuP7ERSL3NMz+slhki0ofgujj1BdFrAokBYfD8B3JwS1LnC2PMj\r\n"
-"wWDj5vgdsmMfupxzwsIs9s/S7xkJ0htGjz7ecxrTQwjPFTeMts93H9z+nJVKi/1p\r\n"
-"mNzpNvpjtRNSaeyRqhQgNR633fRdMBoY6L2tzhf2nUeWcATd8x7+x5irDCMkNsq3\r\n"
-"6ow1k7J0Ii9EnA6SSvspDOEiVnr+lKNmdtX/AgMBAAGjggM7MIIDNzAMBgNVHRMB\r\n"
-"Af8EAjAAMB0GA1UdJQQWMBQGCCsGAQUFBwMBBggrBgEFBQcDAjAOBgNVHQ8BAf8E\r\n"
-"BAMCBaAwNwYDVR0fBDAwLjAsoCqgKIYmaHR0cDovL2NybC5nb2RhZGR5LmNvbS9n\r\n"
-"ZGlnMnMxLTgyOS5jcmwwXQYDVR0gBFYwVDBIBgtghkgBhv1tAQcXATA5MDcGCCsG\r\n"
-"AQUFBwIBFitodHRwOi8vY2VydGlmaWNhdGVzLmdvZGFkZHkuY29tL3JlcG9zaXRv\r\n"
-"cnkvMAgGBmeBDAECATB2BggrBgEFBQcBAQRqMGgwJAYIKwYBBQUHMAGGGGh0dHA6\r\n"
-"Ly9vY3NwLmdvZGFkZHkuY29tLzBABggrBgEFBQcwAoY0aHR0cDovL2NlcnRpZmlj\r\n"
-"YXRlcy5nb2RhZGR5LmNvbS9yZXBvc2l0b3J5L2dkaWcyLmNydDAfBgNVHSMEGDAW\r\n"
-"gBRAwr0njsw0gzCiM9f7bLPwtCyAzjAlBgNVHREEHjAcgg0qLm1vc2FtYmVlLmlu\r\n"
-"ggttb3NhbWJlZS5pbjAdBgNVHQ4EFgQU2tD41PPWpfjQ+R6CfmQVKwF3nhgwggF/\r\n"
-"BgorBgEEAdZ5AgQCBIIBbwSCAWsBaQB3AKS5CZC0GFgUh7sTosxncAo8NZgE+Rvf\r\n"
-"uON3zQ7IDdwQAAABY2MPc+sAAAQDAEgwRgIhAJLbgoCZHoGkE/qHS8YzM5trs8wv\r\n"
-"t+fDEPLpCYbprd2RAiEAphSSTz7BbhT63/vDdJTcK4UHxdfjIIGEJLQ69SjwBzsA\r\n"
-"dgDuS723dc5guuFCaR+r4Z5mow9+X7By2IMAxHuJeqj9ywAAAWNjD3VjAAAEAwBH\r\n"
-"MEUCIQCFj9jBrfPSXbCpNScT4Vhpfdqb+DeiMrPR7wkUROOGRgIgXDnzsZpl7UnX\r\n"
-"ZBW63W92NNNQASvPdgSvze7TRnkQdJUAdgBep3P531bA57U2SH3QSeAyepGaDISh\r\n"
-"EhKEGHWWgXFFWAAAAWNjD3aUAAAEAwBHMEUCIDceESeMg/ovDO0RsWRgCsou2r6Y\r\n"
-"0HR57gQ0VrepXla0AiEA/okP7s7TkVt//Re11lUOfLPcGsjDl+ufv/aWU/zO5BMw\r\n"
-"DQYJKoZIhvcNAQELBQADggEBAFndB63uds+rnGC5zJ5Ha5+UgpcCASQm17JH8BJZ\r\n"
-"uFQSTf6eLqLpgxMSKn+UTVFKb/z6EMTWn6pUXl7kBetRRU2prIGQD/uAKTEs4a2E\r\n"
-"5c5YFbAtJbNJfmGEiLQTq5Wx+lHh02syvF+YLLLrfAGLINDHsABUfniL4TwC5mdi\r\n"
-"oHSdHElm0AlIyUlYXXI5HC1tnNwwrEr4UPIGyD4nFmA5i/Md1c83XAjkx86n0zUo\r\n"
-"yI3bjlpY7rqstSHl+zGrYy+5TeWWZBSBX5y1jGDp1yJTrxcIZ5AGNK+DHRrRU2Cx\r\n"
-"H5ONOex5Qe5fXvGR/lMGo/KK5Rz9CwNJbKduO1yFaG2c5kc=\r\n"
-"-----END CERTIFICATE-----\r\n";
-*/
-const char ssl_test_cas_pem[] =
+const char ssl_cas_pem[] =
 "-----BEGIN CERTIFICATE-----\r\n"
 "MIIEADCCAuigAwIBAgIBADANBgkqhkiG9w0BAQUFADBjMQswCQYDVQQGEwJVUzEh\r\n"
 "MB8GA1UEChMYVGhlIEdvIERhZGR5IEdyb3VwLCBJbmMuMTEwLwYDVQQLEyhHbyBE\r\n"
@@ -109,7 +67,7 @@ const char ssl_test_cas_pem[] =
 "-----END CERTIFICATE-----\r\n";
 
 
-const uint32_t ssl_test_cas_pem_len = sizeof(ssl_test_cas_pem);
+const uint32_t ssl_cas_pem_len = sizeof(ssl_cas_pem);
 
 
 void ssl_test_init(void);
@@ -127,32 +85,36 @@ int read_buf_len;
 
 
 mbedtls_net_context 	 serverId;
-mbedtls_ssl_context 	 ssl;
+mbedtls_ssl_context 	 sslTest;
 mbedtls_ssl_config		 conf;
 mbedtls_x509_crt		 cacert;
 mbedtls_entropy_context  entropy;
 mbedtls_ctr_drbg_context ctrDrbg;
 
-int app_ssl_init(uint32_t ip,uint32_t port)
+
+int ssl_init(uint32_t ip,uint32_t port)
 {
 	printf("\r\n-----------[%d]:%s------------\r\n",__LINE__,__func__);
 
 	int ret;
 	const char *pers = "app ssl init";
+
 	
 	mbedtls_net_init( &serverId );
-    mbedtls_ssl_init( &ssl );
+    mbedtls_ssl_init( &sslTest );
     mbedtls_ssl_config_init( &conf );
     mbedtls_x509_crt_init( &cacert );
     mbedtls_ctr_drbg_init( &ctrDrbg );
 	mbedtls_entropy_init( &entropy );
+
+	mbedtls_debug_set_threshold(DEBUG_LEVEL);
 
 	ret = mbedtls_ctr_drbg_seed(&ctrDrbg,mbedtls_entropy_func,&entropy,(const unsigned char *)pers,strlen( pers ));
 	if (ret != 0) {
 		return -1;
     }
 	
-	ret = mbedtls_x509_crt_parse(&cacert,(const unsigned char *)ssl_test_cas_pem,ssl_test_cas_pem_len );
+	ret = mbedtls_x509_crt_parse(&cacert,(const unsigned char *)ssl_cas_pem,ssl_cas_pem_len );
     if (ret < 0) {
         printf( " failed\n  !  mbedtls_x509_crt_parse returned -0x%x\n\n", -ret );
         return -1;
@@ -173,24 +135,24 @@ int app_ssl_init(uint32_t ip,uint32_t port)
     mbedtls_ssl_conf_ca_chain( &conf, &cacert, NULL );
     mbedtls_ssl_conf_rng( &conf, mbedtls_ctr_drbg_random, &ctrDrbg );
     mbedtls_ssl_conf_dbg( &conf, my_debug, stdout );
-    if (( ret = mbedtls_ssl_setup( &ssl, &conf )) != 0 ) {
+    if (( ret = mbedtls_ssl_setup( &sslTest, &conf )) != 0 ) {
         printf( " failed\n  ! mbedtls_ssl_setup returned %d\n\n", ret );
         return -1;
     }
-    if (( ret = mbedtls_ssl_set_hostname( &ssl, SERVER_NAME )) != 0 ) {
+    if (( ret = mbedtls_ssl_set_hostname( &sslTest, SERVER_NAME )) != 0 ) {
         printf( " failed\n  ! mbedtls_ssl_set_hostname returned %d\n\n", ret );
         return -1;
     }
-    mbedtls_ssl_set_bio( &ssl, &serverId, mbedtls_net_send, mbedtls_net_recv, NULL );
+    mbedtls_ssl_set_bio( &sslTest, &serverId, mbedtls_net_send, mbedtls_net_recv, NULL );
 	
-	while ((ret = mbedtls_ssl_handshake( &ssl )) != 0) {
+	while ((ret = mbedtls_ssl_handshake( &sslTest )) != 0) {
         if (ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE) {
             printf( " failed\n  ! mbedtls_ssl_handshake returned -0x%x\n\n", -ret );
             return -1;
         }
     }
 
-    if (( ret = mbedtls_ssl_get_verify_result( &ssl ) ) != 0) {
+    if (( ret = mbedtls_ssl_get_verify_result( &sslTest ) ) != 0) {
         char vrfy_buf[512];
         mbedtls_x509_crt_verify_info( vrfy_buf, sizeof( vrfy_buf ), "  ! ", ret);
 		return -1;
@@ -207,12 +169,12 @@ void ssl_func( void *pdata )
 	uint32_t flags;
     unsigned char buf[1024];
 
-	app_ssl_init(0,0);
+	ssl_init(0,0);
 
 
     printf( "  > Write to server:" );
     len = sprintf( (char *) buf, GET_REQUEST );
-    while ((ret = mbedtls_ssl_write( &ssl, buf, len)) <= 0) {
+    while ((ret = mbedtls_ssl_write( &sslTest, buf, len)) <= 0) {
         if (ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE) {
             printf(" failed\n  ! mbedtls_ssl_write returned %d\n\n", ret);
             goto exit;
@@ -227,7 +189,7 @@ void ssl_func( void *pdata )
     	printf("\r\n-----------[%d]:%s------------\r\n",__LINE__,__func__);
         read_buf_len = sizeof( read_buf ) - 1;
         memset( read_buf, 0, sizeof( read_buf ) );
-        ret = mbedtls_ssl_read( &ssl, read_buf, read_buf_len );
+        ret = mbedtls_ssl_read( &sslTest, read_buf, read_buf_len );
 
         if (ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE)
             continue;
@@ -255,13 +217,13 @@ void ssl_func( void *pdata )
     }
     while( 1 );
 
-    mbedtls_ssl_close_notify( &ssl );
+    mbedtls_ssl_close_notify( &sslTest );
 
 exit:
 	printf("\r\n-----------[%d]:%s------------\r\n",__LINE__,__func__);
     mbedtls_net_free( &serverId );
     mbedtls_x509_crt_free( &cacert );
-    mbedtls_ssl_free( &ssl );
+    mbedtls_ssl_free( &sslTest );
     mbedtls_ssl_config_free( &conf );
     mbedtls_ctr_drbg_free( &ctrDrbg );
     mbedtls_entropy_free( &entropy );
@@ -275,5 +237,5 @@ void ssl_test_init(void)
 }
 
 
-
+#endif
 

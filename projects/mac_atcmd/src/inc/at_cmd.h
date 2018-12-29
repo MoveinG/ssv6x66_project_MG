@@ -8,6 +8,7 @@
 #define   DEV_MAGIC                                 20181224
 #define   SERIAL_WIFI_APP_VER                       "1.0"
 #define   AT_VERSION								"0.5.0"
+#define   DOMAIN_NAME_LEN_MAX                       255    
 /******************************************************************************
  * MACRO DEFINITION  for AT Comamnd
  *
@@ -230,6 +231,7 @@ typedef struct
 	int port;
 	int sendBufLen;
 	uip_ip4addr_t ip;
+	char domainName[DOMAIN_NAME_LEN_MAX];
 }comm_t;
 
 typedef struct

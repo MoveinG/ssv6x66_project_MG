@@ -1805,7 +1805,7 @@ void atwificbfunc(WIFI_RSP *msg)
         printf("DNS server      - %d.%d.%d.%d\n", dnsserver.u8[0], dnsserver.u8[1], dnsserver.u8[2], dnsserver.u8[3]);
 
         recordAP();
-		if (cntTimeOut) {
+		if ((cntTimeOut) && (OS_TimerIsActive(cntTimeOut))) {
 			//OS_TimerDelete(cntTimeOut);
 			OS_TimerStop(cntTimeOut);
 			app_uart_send("OK\r\n",strlen("OK\r\n"));

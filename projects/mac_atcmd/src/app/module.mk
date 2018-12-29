@@ -23,6 +23,7 @@ LOCAL_INC += -I$(TOPDIR)/components/inc
 
 LOCAL_INC += -I$(TOPDIR)/components/net/tcpip/lwip-1.4.0/src/include
 LOCAL_INC += -I$(TOPDIR)/components/net/tcpip/lwip-1.4.0/src/include/ipv4
+LOCAL_INC += -I$(TOPDIR)/components/net/tcpip/lwip-1.4.0/src/include/lwip
 LOCAL_INC += -I$(TOPDIR)/components/net/tcpip/lwip-1.4.0/ports/icomm/include
 LOCAL_INC += -I$(TOPDIR)/projects/mac_atcmd/src/cli
 LOCAL_INC += -I$(TOPDIR)/components/softmac

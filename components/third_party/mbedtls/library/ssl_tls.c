@@ -6569,7 +6569,7 @@ int mbedtls_ssl_handshake_step( mbedtls_ssl_context *ssl )
 int mbedtls_ssl_handshake( mbedtls_ssl_context *ssl )
 {
     int ret = 0;
-
+	
     if( ssl == NULL || ssl->conf == NULL )
         return( MBEDTLS_ERR_SSL_BAD_INPUT_DATA );
 
