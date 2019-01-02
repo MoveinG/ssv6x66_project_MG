@@ -198,8 +198,9 @@ void app_tranmission_mode(char* buf,int len)
 {
 	static int totalLen = 0;
 
-	printf("[%d]:%s\r\n",len,buf);
-	
+	printf("[%s]:%s,len=%d\r\n",__func__,buf,len);
+	//printf("commSslSendLen=%d,magic=%d\r\n",deviceCommMsg.commSsl.sendBufLen,deviceCommMsg.commSsl.magic);
+	//printf("commTcpSendLen=%d,magic=%d\r\n",deviceCommMsg.commTcp.sendBufLen,deviceCommMsg.commTcp.magic);
 	if (deviceCommMsg.commSsl.sendBufLen != 0) {
 		if (deviceCommMsg.commSsl.magic == DEV_MAGIC) {
 			totalLen += len;
@@ -222,8 +223,9 @@ void app_tranmission_mode(char* buf,int len)
 		if (deviceCommMsg.commTcp.magic == DEV_MAGIC) {
 			totalLen += len;
 			strcat(sendBuf,buf);
-			if (totalLen >= deviceCommMsg.commTcp.sendBufLen) {
-				if (app_tcp_send(deviceCommMsg.commTcp.id,sendBuf,deviceCommMsg.commTcp.sendBufLen) != -1) {
+			if ((totalLen >= deviceCommMsg.commTcp.sendBufLen) ||\
+				(buf[len] == '\0')) {
+				if (app_tcp_send(deviceCommMsg.commTcp.id,sendBuf,((totalLen < deviceCommMsg.commTcp.sendBufLen)?totalLen:deviceCommMsg.commTcp.sendBufLen)) != -1) {
 					app_uart_send("SEND OK\r\n",strlen("SEND OK\r\n"));
 				} else {
 					app_uart_send("SEND FAIL\r\n",strlen("SEND FAIL\r\n"));
@@ -239,6 +241,7 @@ void app_tranmission_mode(char* buf,int len)
 		//null
 	} else {
 		if (strlen(sendBuf) != 0) {
+			totalLen = 0;
 			memset(sendBuf,0,SEND_BUF_LEN_MAX);
 		}
 	}
@@ -269,7 +272,7 @@ void app_uart_rx_task(void *pdata)
       {
          if(AppUartRx->recv_len > 0)
          {
-            if(AppUartRx->recv_len == last_recv_len)
+            //if(AppUartRx->recv_len == last_recv_len)
             {
                if (!(memcmp(AppUartRx->buf,AT_CMD_PREFIX,strlen(AT_CMD_PREFIX))) &&\
 			   	(rx_full_flg == false)) {
@@ -279,8 +282,9 @@ void app_uart_rx_task(void *pdata)
 			   		app_tranmission_mode(AppUartRx->buf,AppUartRx->recv_len);
 			   }
                AppUartRx->recv_len = 0;
+			   memset(AppUartRx->buf,0,APP_UART_BUF_MAX);
             }
-			last_recv_len = AppUartRx->recv_len;
+			//last_recv_len = AppUartRx->recv_len;
 		 }
 		 rx_full_flg = false;
       }

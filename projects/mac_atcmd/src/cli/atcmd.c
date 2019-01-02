@@ -28,6 +28,7 @@
 #include "wifi_api.h"
 #include "mac_cfg.h"
 #include "sysconf_api.h"
+#include "at_cmd.h"
 
 #if defined(SUPPORT_PARTITION_CFG_TABLE)
 #include "atcmd_cfg.h"
@@ -1813,6 +1814,11 @@ void atwificbfunc(WIFI_RSP *msg)
     }
     else
     {
+    	if (deviceCommMsg.commSsl.magic == DEV_MAGIC) {
+			app_ssl_close(&(deviceCommMsg.commSsl));
+		} else if (deviceCommMsg.commTcp.magic == DEV_MAGIC) {
+			app_tcp_close(&(deviceCommMsg.commTcp));
+		}
         printf("%s OK\n", ATCMD_DISCONNECT);
     }
 	

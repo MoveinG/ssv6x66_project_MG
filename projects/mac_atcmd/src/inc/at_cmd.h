@@ -5,9 +5,18 @@
 
 
 
-#define   DEV_MAGIC                                 20181224
+													/****
+													1、20181224
+													2、20190102
+													****/
+#define   DEV_MAGIC                                 20190102
 #define   SERIAL_WIFI_APP_VER                       "1.0"
-#define   AT_VERSION								"0.5.0"
+													/****
+													1、"0.5.0"
+													2、"0.5.1"
+													3、"0.5.2"
+													****/
+#define   AT_VERSION								"0.5.2"
 #define   DOMAIN_NAME_LEN_MAX                       255    
 /******************************************************************************
  * MACRO DEFINITION  for AT Comamnd

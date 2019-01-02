@@ -58,7 +58,7 @@ void scan_cb_func()
 	char rsp[100] = {0};
 	extern u8 getAvailableIndex();
     printf("\nCount:%d\n", getAvailableIndex());
-	app_uart_send("+CWLAP:",strlen("+CWLAP:"));
+	app_uart_send("+CWLAP:\r\n",strlen("+CWLAP:\r\n"));
     for(i = 0; i < getAvailableIndex(); i++)
     {
     	sprintf(rsp,"%d,%s,-%d,%.02x:%.02x:%.02x:%.02x:%.02x:%.02x,%d\r\n",\
@@ -142,6 +142,7 @@ void connect_timeout_handler(void)
 	sprintf(rsp,"+CWJAP_DEF:%d\r\n",cntErrorCode);
 	app_uart_send(rsp,strlen(rsp));
 	app_uart_send(RSP_FAIL,strlen(RSP_FAIL));
+	wifi_disconnect(atwificbfunc);
 }
 
 int32_t AT_ConnectApProcessing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8_t *rsp)
@@ -181,7 +182,6 @@ int32_t AT_ConnectApProcessing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8_
 			DUT_wifi_start(DUT_STA);
 		}
 		if (CIB.deviceIpConfig.devStaIpCfg.dhcpEn == 0) {
-			printf("-------------11111----------------");
 			set_if_config(CIB.deviceIpConfig.devStaIpCfg.dhcpEn, CIB.deviceIpConfig.devStaIpCfg.ip.u32, CIB.deviceIpConfig.devStaIpCfg.netmask.u32, CIB.deviceIpConfig.devStaIpCfg.gateway.u32, 0);
 		}
 		wifi_disconnect(NULL);
@@ -473,12 +473,9 @@ int32_t AT_Cfg_SendIp_Processing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint
 				deviceCommMsg.commTcp.port  = port;
 				if (app_tcp_create(&(deviceCommMsg.commTcp)) != 1) {
 					printf("[%d]:tcp communication create failure!\r\n");
-					return CMD_ERROR;
+					return CMD_NO_RESPONSE;
 				}
-				if ((deviceCommMsg.commTcp.id != -1) &&\
-					(deviceCommMsg.commTcp.magic == DEV_MAGIC)) {
-					return CMD_SUCCESS;
-				}
+				return CMD_NO_RESPONSE;
 			} else {
 				app_uart_send("ALREADY CONNECTED\r\n",strlen("ALREADY CONNECTED\r\n"));
 				return CMD_NO_RESPONSE;
@@ -550,6 +547,8 @@ int32_t AT_Send_Data_Processing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8
 				} else if (deviceCommMsg.commSsl.magic == DEV_MAGIC) {
 					deviceCommMsg.commSsl.sendBufLen = len;
 					app_uart_send("\r\n>",strlen("\r\n>"));
+					//app_ssl_send("GET / HTTP/1.1\r\nHost:www.baidu.com\r\n\r\n",\
+								 //strlen("GET / HTTP/1.1\r\nHost:www.baidu.com\r\n\r\n"));
 					return CMD_NO_RESPONSE;
 				}
 				return CMD_ERROR;
@@ -564,7 +563,6 @@ int32_t AT_Send_Data_Processing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8
 }
 int32_t AT_Close_Comm_Processing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8_t *rsp)
 {
-	comm_t* commType;
 	atcmd_type_e cmdType = DEFAULT;
 	uint8_t params[AT_FUNC_PARAMS_MAX_NUM][AT_FUNC_PARAMS_MAX_LEN] = {0}; 
 	
@@ -573,8 +571,7 @@ int32_t AT_Close_Comm_Processing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint
 	cmdType = atcmd_type_get(pBuf);
 	if (cmdType == ACTION_COMMAND) {
 		if (deviceCommMsg.commTcp.magic == DEV_MAGIC) {
-			*commType = deviceCommMsg.commTcp;
-			app_tcp_close(commType);
+			app_tcp_close(&(deviceCommMsg.commTcp));
 			deviceCommMsg.commTcp.magic = 0;
 		}
 		if (deviceCommMsg.commUdp.magic == DEV_MAGIC) {

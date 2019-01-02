@@ -33,6 +33,7 @@ const atcmd_info_t atcmd_info[] =
     {AT_CMD_RESET,		AT_ResetProcessing,			0},
     
     {AT_CMD_SCANAP,			AT_ScanProcessing,			0},
+    //{AT_CMD_SCAN,			AT_ScanProcessing,			0},
     {AT_CMD_SETMODE,   	 	AT_SetModeProcessing,    	1},
     {AT_CMD_CNT_AP,     	AT_ConnectApProcessing,  	4},
 	{AT_CMD_DISCNT_AP,   	AT_DisconnectApProcessing,  0},
