@@ -514,10 +514,7 @@ int32_t AT_Cfg_SendIp_Processing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint
 				memcpy(deviceCommMsg.commSsl.domainName,params[1],strlen(params[1]));
 				deviceCommMsg.commSsl.port  = port;
 				app_ssl_create();
-				vTaskDelay(200 / portTICK_RATE_MS);
-				if (deviceCommMsg.commSsl.magic == DEV_MAGIC) {
-					return CMD_SUCCESS;
-				}
+				return CMD_NO_RESPONSE;
 			} else {
 				app_uart_send("ALREADY CONNECTED\r\n",strlen("ALREADY CONNECTED\r\n"));
 				return CMD_NO_RESPONSE;
