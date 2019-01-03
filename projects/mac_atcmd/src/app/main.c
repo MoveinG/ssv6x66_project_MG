@@ -74,11 +74,13 @@ void wifi_auto_connect_task(void *pdata)
 {  
 	//printf("-------------autoCntEn:%d --------------\r\n",CIB.autoConnectEn);
 	if (CIB.autoConnectEn) {
+		printf("000000000\r\n");
 		set_auto_connect_flag(1);
 	} else if (CIB.autoConnectEn == 0) {
 		set_auto_connect_flag(0);
 	}
 	if (CIB.deviceIpConfig.devStaIpCfg.dhcpEn == 0) {
+		printf("11111111\r\n");
 		uint32_t server = 0;
 		if (CIB.deviceIpConfig.devStaIpCfg.dnsEN) {
 			server = CIB.deviceIpConfig.devStaIpCfg.dns.u32;

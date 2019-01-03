@@ -120,7 +120,24 @@ int32_t AT_SetModeProcessing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8_t 
 		if ((deviceMode > 5) || (strlen(params[0]) > 1)) {
 			return CMD_ERROR;
 		}
-		DUT_wifi_start(deviceMode);
+		if ((get_DUT_wifi_mode() == DUT_STA) && (deviceMode == DUT_AP)) {
+			wifi_disconnect(NULL);
+			CIB.wifimode = DUT_AP;
+			CIBWrite();
+			DUT_wifi_start(DUT_AP);
+		} else if ((get_DUT_wifi_mode() == DUT_AP) && (deviceMode == DUT_STA)) {
+			CIB.wifimode = DUT_STA;
+			CIBWrite();
+			DUT_wifi_start(DUT_STA);
+			OS_MsDelay(100);
+			if (CIB.autoConnectEn) {
+				wifi_connect_active ( gwifistatus.connAP[0].ssid,\
+									strlen(gwifistatus.connAP[0].ssid),\
+									gwifistatus.connAP[0].key,\
+									strlen(gwifistatus.connAP[0].key),\
+									atwificbfunc);
+			}
+		}
 		return CMD_SUCCESS;
 	} else if (cmdType == GET_CURE_PARAM_COMMAND) {
 		deviceMode = get_DUT_wifi_mode();
@@ -182,7 +199,10 @@ int32_t AT_ConnectApProcessing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8_
 			DUT_wifi_start(DUT_STA);
 		}
 		if (CIB.deviceIpConfig.devStaIpCfg.dhcpEn == 0) {
-			set_if_config(CIB.deviceIpConfig.devStaIpCfg.dhcpEn, CIB.deviceIpConfig.devStaIpCfg.ip.u32, CIB.deviceIpConfig.devStaIpCfg.netmask.u32, CIB.deviceIpConfig.devStaIpCfg.gateway.u32, 0);
+			set_if_config(CIB.deviceIpConfig.devStaIpCfg.dhcpEn,\
+				CIB.deviceIpConfig.devStaIpCfg.ip.u32,\
+				CIB.deviceIpConfig.devStaIpCfg.netmask.u32,\
+				CIB.deviceIpConfig.devStaIpCfg.gateway.u32, 0);
 		}
 		wifi_disconnect(NULL);
 		vTaskDelay(200);
@@ -544,8 +564,6 @@ int32_t AT_Send_Data_Processing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8
 				} else if (deviceCommMsg.commSsl.magic == DEV_MAGIC) {
 					deviceCommMsg.commSsl.sendBufLen = len;
 					app_uart_send("\r\n>",strlen("\r\n>"));
-					//app_ssl_send("GET / HTTP/1.1\r\nHost:www.baidu.com\r\n\r\n",\
-								 //strlen("GET / HTTP/1.1\r\nHost:www.baidu.com\r\n\r\n"));
 					return CMD_NO_RESPONSE;
 				}
 				return CMD_ERROR;

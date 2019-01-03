@@ -46,7 +46,8 @@ void ssvradio_init_task(void *pdata)
     drv_sec_init();
     netstack_init(NULL);
     load_phy_table();
-    DUT_wifi_start(DUT_STA);
+	DUT_wifi_start(CIB.wifimode);
+    //DUT_wifi_start(DUT_STA);
     
     OS_TaskDelete(NULL);
 }
