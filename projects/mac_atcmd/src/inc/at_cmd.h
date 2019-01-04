@@ -273,6 +273,14 @@ typedef enum
 	ADDR_DOMAIN
 }addr_type_t;
 
+typedef enum
+{
+	CONNECTED_AP = 1,
+	DISCONNECT_AP = 2,
+	DEFAULT_STATUS = 0xff,
+}dev_status_e;
+
+
 typedef struct
 {
 	addr_type_t type;

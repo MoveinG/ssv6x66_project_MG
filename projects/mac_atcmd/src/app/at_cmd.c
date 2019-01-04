@@ -305,8 +305,11 @@ void at_command_param_parse(uint8_t* cmd,uint8_t len,uint8_t params[AT_FUNC_PARA
 	while ((pcmdT) && (length < len)) {
 		paramLen = pcmdT - pcmdH - 1;
 		length  += paramLen + 1;
-		
-		memcpy(params[paramNum],pcmdH+1, paramLen);
+		if ((*(pcmdH+1) == '"') && (*(pcmdH+2+paramLen) == '"')) {
+			memcpy(params[paramNum],pcmdH+2, paramLen-2);
+		} else {
+			memcpy(params[paramNum],pcmdH+1, paramLen);
+		}
 		params[paramNum][paramLen] = '\0';
 		pcmdH = pcmdT;
 		pcmdT = strchr(pcmdH+1,',');
@@ -316,7 +319,11 @@ void at_command_param_parse(uint8_t* cmd,uint8_t len,uint8_t params[AT_FUNC_PARA
 	if (pcmdH) {
 		pcmdT = strchr(cmd,'\r');
 		paramLen = pcmdT - pcmdH - 1;
-		memcpy(params[paramNum],pcmdH+1, paramLen);
+		if ((*(pcmdH+1) == '"') && (*(pcmdH+paramLen) == '"')) {
+			memcpy(params[paramNum],pcmdH+2, paramLen-2);
+		} else {
+			memcpy(params[paramNum],pcmdH+1, paramLen);
+		}
 		params[paramNum][paramLen] = '\0';
 	}
 }

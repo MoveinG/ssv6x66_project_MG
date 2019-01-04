@@ -1783,6 +1783,7 @@ void scan_cbfunc()
 
 extern OsTimer cntTimeOut;
 uint16_t cntErrorCode;
+dev_status_e devStatus = DEFAULT_STATUS;
 void atwificbfunc(WIFI_RSP *msg)
 {
     uint8_t dhcpen;
@@ -1794,6 +1795,7 @@ void atwificbfunc(WIFI_RSP *msg)
     if(msg->wifistatus == 1)
     {
         printf("%s OK\n", ATCMD_CONNECT);
+		app_uart_send("WIFI CONNECTED\r\n",strlen("WIFI CONNECTED\r\n"));
         if(msg->id == 0)
             get_if_config_2("et0", &dhcpen, (u32*)&ipaddr, (u32*)&submask, (u32*)&gateway, (u32*)&dnsserver, mac, 6);
         else
@@ -1804,8 +1806,17 @@ void atwificbfunc(WIFI_RSP *msg)
         printf("netmask         - %d.%d.%d.%d\n", submask.u8[0], submask.u8[1], submask.u8[2], submask.u8[3]);
         printf("default gateway - %d.%d.%d.%d\n", gateway.u8[0], gateway.u8[1], gateway.u8[2], gateway.u8[3]);
         printf("DNS server      - %d.%d.%d.%d\n", dnsserver.u8[0], dnsserver.u8[1], dnsserver.u8[2], dnsserver.u8[3]);
+		printf("------------------------------------------------------------------------\r\n");
+		get_if_config( &dhcpen, (u32*)&ipaddr, (u32*)&submask, (u32*)&gateway, (u32*)&dnsserver);
+		printf("STA%d:\n", msg->id);
+		printf("ip addr 		- %d.%d.%d.%d\n", ipaddr.u8[0], ipaddr.u8[1], ipaddr.u8[2], ipaddr.u8[3]);
+		printf("netmask 		- %d.%d.%d.%d\n", submask.u8[0], submask.u8[1], submask.u8[2], submask.u8[3]);
+		printf("default gateway - %d.%d.%d.%d\n", gateway.u8[0], gateway.u8[1], gateway.u8[2], gateway.u8[3]);
+		printf("DNS server		- %d.%d.%d.%d\n", dnsserver.u8[0], dnsserver.u8[1], dnsserver.u8[2], dnsserver.u8[3]);
+				
 
-        recordAP();
+		recordAP();
+		devStatus = CONNECTED_AP;
 		if ((cntTimeOut) && (OS_TimerIsActive(cntTimeOut))) {
 			//OS_TimerDelete(cntTimeOut);
 			OS_TimerStop(cntTimeOut);
@@ -1814,12 +1825,14 @@ void atwificbfunc(WIFI_RSP *msg)
     }
     else
     {
+    	devStatus = DISCONNECT_AP;
     	if (deviceCommMsg.commSsl.magic == DEV_MAGIC) {
 			app_ssl_close(&(deviceCommMsg.commSsl));
 		} else if (deviceCommMsg.commTcp.magic == DEV_MAGIC) {
 			app_tcp_close(&(deviceCommMsg.commTcp));
 		}
         printf("%s OK\n", ATCMD_DISCONNECT);
+		app_uart_send("WIFI DISCONNECT\r\n",strlen("WIFI DISCONNECT\r\n"));
     }
 	
 	printf("wifi status:%d\r\nreason:%d\r\ncode:%d\r\n",msg->wifistatus,msg->reason,msg->code);

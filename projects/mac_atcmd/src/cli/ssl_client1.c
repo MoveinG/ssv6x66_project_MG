@@ -34,9 +34,9 @@
 #include "ssl_client1.h"
 
 #define SERVER_PORT   "443"
-#define SERVER_IP     "14.215.177.38"   //"114.143.22.138"
-#define SERVER_NAME   "www.baidu.com"   //"test.mosambee.in"
-#define GET_REQUEST   "GET / HTTP/1.1\r\nHost:www.baidu.com\r\n\r\n"
+#define SERVER_IP     "114.143.22.138"   //"114.143.22.138"
+#define SERVER_NAME   "test.mosambee.in"   //"test.mosambee.in"
+#define GET_REQUEST   "GET / HTTP/1.1\r\ntest.mosambee.in\r\n\r\n"
 
 #define DEBUG_LEVEL 2
 
@@ -84,12 +84,12 @@ int read_buf_len;
 
 
 
-mbedtls_net_context 	 serverId;
+mbedtls_net_context 	 serverIdTest;
 mbedtls_ssl_context 	 sslTest;
-mbedtls_ssl_config		 conf;
-mbedtls_x509_crt		 cacert;
-mbedtls_entropy_context  entropy;
-mbedtls_ctr_drbg_context ctrDrbg;
+mbedtls_ssl_config		 confTest;
+mbedtls_x509_crt		 cacertTest;
+mbedtls_entropy_context  entropyTest;
+mbedtls_ctr_drbg_context ctrDrbgTest;
 
 
 int ssl_init(uint32_t ip,uint32_t port)
@@ -100,42 +100,42 @@ int ssl_init(uint32_t ip,uint32_t port)
 	const char *pers = "app ssl init";
 
 	
-	mbedtls_net_init( &serverId );
+	mbedtls_net_init( &serverIdTest );
     mbedtls_ssl_init( &sslTest );
-    mbedtls_ssl_config_init( &conf );
-    mbedtls_x509_crt_init( &cacert );
-    mbedtls_ctr_drbg_init( &ctrDrbg );
-	mbedtls_entropy_init( &entropy );
+    mbedtls_ssl_config_init( &confTest );
+    mbedtls_x509_crt_init( &cacertTest );
+    mbedtls_ctr_drbg_init( &ctrDrbgTest );
+	mbedtls_entropy_init( &entropyTest );
 
 	mbedtls_debug_set_threshold(DEBUG_LEVEL);
 
-	ret = mbedtls_ctr_drbg_seed(&ctrDrbg,mbedtls_entropy_func,&entropy,(const unsigned char *)pers,strlen( pers ));
+	ret = mbedtls_ctr_drbg_seed(&ctrDrbgTest,mbedtls_entropy_func,&entropyTest,(const unsigned char *)pers,strlen( pers ));
 	if (ret != 0) {
 		return -1;
     }
 	
-	ret = mbedtls_x509_crt_parse(&cacert,(const unsigned char *)ssl_cas_pem,ssl_cas_pem_len );
+	ret = mbedtls_x509_crt_parse(&cacertTest,(const unsigned char *)ssl_cas_pem,ssl_cas_pem_len );
     if (ret < 0) {
         printf( " failed\n  !  mbedtls_x509_crt_parse returned -0x%x\n\n", -ret );
         return -1;
     }
 	
-	ret = mbedtls_net_connect(&serverId, SERVER_IP,SERVER_PORT, MBEDTLS_NET_PROTO_TCP);
+	ret = mbedtls_net_connect(&serverIdTest, SERVER_IP,SERVER_PORT, MBEDTLS_NET_PROTO_TCP);
     if (ret != 0) {
         printf( " failed\n  ! mbedtls_net_connect returned %d\n\n", ret );
         return -1;
     }
 
-    if (( ret = mbedtls_ssl_config_defaults(&conf,MBEDTLS_SSL_IS_CLIENT,MBEDTLS_SSL_TRANSPORT_STREAM,MBEDTLS_SSL_PRESET_DEFAULT)) != 0) {
+    if (( ret = mbedtls_ssl_config_defaults(&confTest,MBEDTLS_SSL_IS_CLIENT,MBEDTLS_SSL_TRANSPORT_STREAM,MBEDTLS_SSL_PRESET_DEFAULT)) != 0) {
         printf( " failed\n  ! mbedtls_ssl_config_defaults returned %d\n\n", ret );
         return -1;
     }
 
-	mbedtls_ssl_conf_authmode( &conf, MBEDTLS_SSL_VERIFY_OPTIONAL );
-    mbedtls_ssl_conf_ca_chain( &conf, &cacert, NULL );
-    mbedtls_ssl_conf_rng( &conf, mbedtls_ctr_drbg_random, &ctrDrbg );
-    mbedtls_ssl_conf_dbg( &conf, my_debug, stdout );
-    if (( ret = mbedtls_ssl_setup( &sslTest, &conf )) != 0 ) {
+	mbedtls_ssl_conf_authmode( &confTest, MBEDTLS_SSL_VERIFY_OPTIONAL );
+    mbedtls_ssl_conf_ca_chain( &confTest, &cacertTest, NULL );
+    mbedtls_ssl_conf_rng( &confTest, mbedtls_ctr_drbg_random, &ctrDrbgTest );
+    mbedtls_ssl_conf_dbg( &confTest, my_debug, stdout );
+    if (( ret = mbedtls_ssl_setup( &sslTest, &confTest )) != 0 ) {
         printf( " failed\n  ! mbedtls_ssl_setup returned %d\n\n", ret );
         return -1;
     }
@@ -143,7 +143,7 @@ int ssl_init(uint32_t ip,uint32_t port)
         printf( " failed\n  ! mbedtls_ssl_set_hostname returned %d\n\n", ret );
         return -1;
     }
-    mbedtls_ssl_set_bio( &sslTest, &serverId, mbedtls_net_send, mbedtls_net_recv, NULL );
+    mbedtls_ssl_set_bio( &sslTest, &serverIdTest, mbedtls_net_send, mbedtls_net_recv, NULL );
 	
 	while ((ret = mbedtls_ssl_handshake( &sslTest )) != 0) {
         if (ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE) {
@@ -164,7 +164,6 @@ int ssl_init(uint32_t ip,uint32_t port)
 
 void ssl_func( void *pdata )
 {
-	printf("\r\n-----------[%d]:%s------------\r\n",__LINE__,__func__);
     int ret, len;
 	uint32_t flags;
     unsigned char buf[1024];
@@ -186,7 +185,6 @@ void ssl_func( void *pdata )
 
     printf( "  < Read from server:" );
     do {
-    	printf("\r\n-----------[%d]:%s------------\r\n",__LINE__,__func__);
         read_buf_len = sizeof( read_buf ) - 1;
         memset( read_buf, 0, sizeof( read_buf ) );
         ret = mbedtls_ssl_read( &sslTest, read_buf, read_buf_len );
@@ -220,13 +218,13 @@ void ssl_func( void *pdata )
     mbedtls_ssl_close_notify( &sslTest );
 
 exit:
-	printf("\r\n-----------[%d]:%s------------\r\n",__LINE__,__func__);
-    mbedtls_net_free( &serverId );
-    mbedtls_x509_crt_free( &cacert );
+	printf("delete ssl test task.\r\n");
+    mbedtls_net_free( &serverIdTest );
+    mbedtls_x509_crt_free( &cacertTest );
     mbedtls_ssl_free( &sslTest );
-    mbedtls_ssl_config_free( &conf );
-    mbedtls_ctr_drbg_free( &ctrDrbg );
-    mbedtls_entropy_free( &entropy );
+    mbedtls_ssl_config_free( &confTest );
+    mbedtls_ctr_drbg_free( &ctrDrbgTest );
+    mbedtls_entropy_free( &entropyTest );
     OS_TaskDelete(NULL);
 }
 

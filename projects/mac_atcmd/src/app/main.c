@@ -79,17 +79,37 @@ void wifi_auto_connect_task(void *pdata)
 	} else if (CIB.autoConnectEn == 0) {
 		set_auto_connect_flag(0);
 	}
+	
 	if (CIB.deviceIpConfig.devStaIpCfg.dhcpEn == 0) {
-		printf("11111111\r\n");
 		uint32_t server = 0;
 		if (CIB.deviceIpConfig.devStaIpCfg.dnsEN) {
 			server = CIB.deviceIpConfig.devStaIpCfg.dns.u32;
+			gwifistatus.connAP[0].ipconf.dns_server.u32 = server;
 		}
+		gwifistatus.connAP[0].ipconf.dhcp_enable = 1;
+		gwifistatus.connAP[0].ipconf.gateway_ip_addr.u32 = CIB.deviceIpConfig.devStaIpCfg.gateway.u32;
+		gwifistatus.connAP[0].ipconf.local_ip_addr.u32 = CIB.deviceIpConfig.devStaIpCfg.ip.u32;
+		gwifistatus.connAP[0].ipconf.net_mask.u32 = CIB.deviceIpConfig.devStaIpCfg.netmask.u32;
 		set_if_config(CIB.deviceIpConfig.devStaIpCfg.dhcpEn,\
-			CIB.deviceIpConfig.devStaIpCfg.ip.u32,\
-			CIB.deviceIpConfig.devStaIpCfg.netmask.u32,\
-			CIB.deviceIpConfig.devStaIpCfg.gateway.u32,\
-			server);
+				CIB.deviceIpConfig.devStaIpCfg.ip.u32,\
+				CIB.deviceIpConfig.devStaIpCfg.netmask.u32,\
+				CIB.deviceIpConfig.devStaIpCfg.gateway.u32, server);
+		printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\r\n");
+		printf("ip:\"%d.%d.%d.%d\",getway:\"%d.%d.%d.%d\",mask:\"%d.%d.%d.%d\"\r\n",\
+				gwifistatus.connAP[0].ipconf.local_ip_addr.u8[0],\
+				gwifistatus.connAP[0].ipconf.local_ip_addr.u8[1],\
+				gwifistatus.connAP[0].ipconf.local_ip_addr.u8[2],\
+				gwifistatus.connAP[0].ipconf.local_ip_addr.u8[3],\
+				gwifistatus.connAP[0].ipconf.gateway_ip_addr.u8[0],\
+				gwifistatus.connAP[0].ipconf.gateway_ip_addr.u8[1],\
+				gwifistatus.connAP[0].ipconf.gateway_ip_addr.u8[2],\
+				gwifistatus.connAP[0].ipconf.gateway_ip_addr.u8[3],\
+				gwifistatus.connAP[0].ipconf.net_mask.u8[0],\
+				gwifistatus.connAP[0].ipconf.net_mask.u8[1],\
+				gwifistatus.connAP[0].ipconf.net_mask.u8[2],\
+				gwifistatus.connAP[0].ipconf.net_mask.u8[3]);
+	} else {
+		gwifistatus.connAP[0].ipconf.dhcp_enable = 0;
 	}
     if( get_auto_connect_flag() == 1 )
     {

@@ -238,6 +238,9 @@ void app_tranmission_mode(char* buf,int len)
 			app_uart_send("ERROR\r\n",strlen("ERROR\r\n"));
 		}
 	}else if (deviceCommMsg.commUdp.sendBufLen != 0) {
+		totalLen = 0;
+		memset(sendBuf,0,SEND_BUF_LEN_MAX);
+		deviceCommMsg.commUdp.sendBufLen = 0;
 		//null
 	} else {
 		if (strlen(sendBuf) != 0) {
@@ -264,7 +267,7 @@ void app_uart_rx_task(void *pdata)
    	OS_STATUS ret;
    	uint32_t last_recv_len = 0;
    	bool rx_full_flg = false;
-    
+    app_uart_send("ready\r\n",strlen("ready\r\n"));
    while(1)
    {
       ret = OS_SemWait(AppUartRxSem, APP_UART_RX_TIMEOUT/OS_TICK_RATE_MS);
