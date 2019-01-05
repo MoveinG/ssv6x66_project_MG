@@ -84,7 +84,7 @@ void Serial2WiFiInit(void)
 	printf("fd:%d\r\n",fd);
 	app_uart_int();
     if (OS_TimerCreate(&cntTimeOut,5000, (unsigned char)0, NULL, (OsTimerHandler)connect_timeout_handler) != OS_SUCCESS) {
-         printf("connect ap timer create error!\r\n");
+         printf("[%s]:connect ap timer create error!\r\n",__TIME__);
     }
 }
 
@@ -113,7 +113,7 @@ SSV_FILE CIBRead(void)
 		FS_write(fs_handle,fd,&CIB,sizeof(CIB));
 	}
 	FS_close(fs_handle,fd);
-	printf("CIB read ok\r\n");
+	printf("[%s]:CIB read ok.\r\n",__TIME__);
 	//return fd;
   }
   else
@@ -124,7 +124,7 @@ SSV_FILE CIBRead(void)
     {
       fd = FS_write(fs_handle,fd,&CIB,sizeof(CIB));
 	  FS_close(fs_handle,fd);
-	  printf("CIB create and write ok\r\n");
+	  printf("[%s]:CIB create and write ok.\r\n",__TIME__);
 	}
   }
   return fd;
@@ -140,7 +140,7 @@ SSV_FILE CIBWrite(void)
   	{
     	fd = FS_write(fs_handle,fd,&CIB,sizeof(CIB));
 		FS_close(fs_handle,fd);
-		printf("CIB write ok\r\n");
+		printf("[%s]:CIB write ok.\r\n",__TIME__);
   	}
 	return fd;
 }
@@ -178,7 +178,7 @@ void CIBInit(void)
   memset(CIB.apinfo.ssid,0,SSID_STRINGS_MAX);
   memset(CIB.apinfo.seckey,0,SECURE_KEY_MAX);
   snprintf(CIB.apinfo.ssid,SSID_STRINGS_MAX,AP_SSID_DEFAULT,mac_addr[4],mac_addr[5]);
-  printf("ap ssid:%s\r\n",CIB.apinfo.ssid);
+  //printf("ap ssid:%s\r\n",CIB.apinfo.ssid);
   strcpy(CIB.apinfo.seckey,AP_SCETYPE_DEFAULT);
   strcpy(CIB.apinfo.seckey,AP_KEY_DEFAULT);
 
@@ -257,7 +257,6 @@ void AppUartProcessing(uint8_t *data,uint16_t len)
 {
   	int32_t status;
 
-	printf("uartBuf:%s\r\n",data);
    	if(AtCmdMode == ATCMD_MODE)
   	{
       	status = ATCmdProcessing(data,len);

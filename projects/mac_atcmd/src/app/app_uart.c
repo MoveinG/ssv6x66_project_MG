@@ -53,18 +53,17 @@ void app_uart_int(void)
     drv_hsuart_set_hardware_flow_control (16, 24);
 
     //drv_hsuart_set_format(115200, HSUART_WLS_8,HSUART_STB_1 , HSUART_PARITY_DISABLE);
+    printf("[%s]:app uart band is %d.\r\n",__TIME__,CIB.uartcfg.baudrate);
     app_uart_set_format(CIB.uartcfg.baudrate,CIB.uartcfg.databits,CIB.uartcfg.stopbit,CIB.uartcfg.datapaity);
 
-	printf("\r\n-----------baud:%d------------\r\n",CIB.uartcfg.baudrate);	
 	drv_hsuart_register_isr(HSUART_RX_DATA_READY_IE, app_uart_isr);
 	if(OS_SemInit(&AppUartRxSem, 1, 0) == OS_SUCCESS)
 	{
-	    //printf("\r\n-----------[%d]:%s------------\r\n",__LINE__,__func__);	
-        OS_TaskCreate(app_uart_rx_task, "app uart rx task", 512, NULL, APP_UART_RX_TASK_PRIORITY, NULL);
+        OS_TaskCreate(app_uart_rx_task, "app uart rx task", 1024, NULL, APP_UART_RX_TASK_PRIORITY, NULL);
 	}
 	else
 	{
-       printf("app uart rx sem init fail\r\n");
+       printf("[%s]:app uart rx sem init fail!\r\n",__TIME__);
 	}
 }
 
@@ -198,9 +197,6 @@ void app_tranmission_mode(char* buf,int len)
 {
 	static int totalLen = 0;
 
-	printf("[%s]:%s,len=%d\r\n",__func__,buf,len);
-	//printf("commSslSendLen=%d,magic=%d\r\n",deviceCommMsg.commSsl.sendBufLen,deviceCommMsg.commSsl.magic);
-	//printf("commTcpSendLen=%d,magic=%d\r\n",deviceCommMsg.commTcp.sendBufLen,deviceCommMsg.commTcp.magic);
 	if (deviceCommMsg.commSsl.sendBufLen != 0) {
 		if (deviceCommMsg.commSsl.magic == DEV_MAGIC) {
 			totalLen += len;
@@ -217,6 +213,7 @@ void app_tranmission_mode(char* buf,int len)
 			}
 		} else {
 			deviceCommMsg.commSsl.sendBufLen = 0;
+			printf("[%s]:ssl connection invalid!\r\n",__TIME__);
 			app_uart_send("ERROR\r\n",strlen("ERROR\r\n"));
 		}
 	} else if (deviceCommMsg.commTcp.sendBufLen != 0) {
@@ -235,6 +232,7 @@ void app_tranmission_mode(char* buf,int len)
 			}
 		} else {
 			deviceCommMsg.commTcp.sendBufLen = 0;
+			printf("[%s]:tcp connection invalid!\r\n",__TIME__);
 			app_uart_send("ERROR\r\n",strlen("ERROR\r\n"));
 		}
 	}else if (deviceCommMsg.commUdp.sendBufLen != 0) {
@@ -243,6 +241,7 @@ void app_tranmission_mode(char* buf,int len)
 		deviceCommMsg.commUdp.sendBufLen = 0;
 		//null
 	} else {
+		printf("[%s]:please set the sending length first!\r\n",__TIME__);
 		if (strlen(sendBuf) != 0) {
 			totalLen = 0;
 			memset(sendBuf,0,SEND_BUF_LEN_MAX);
@@ -277,6 +276,7 @@ void app_uart_rx_task(void *pdata)
          {
             //if(AppUartRx->recv_len == last_recv_len)
             {
+               printf("[%s]:uart rx:%s\r\n",__TIME__,AppUartRx->buf);
                if (!(memcmp(AppUartRx->buf,AT_CMD_PREFIX,strlen(AT_CMD_PREFIX))) &&\
 			   	(rx_full_flg == false)) {
 			   		AtCmdMode = ATCMD_MODE;
@@ -294,7 +294,7 @@ void app_uart_rx_task(void *pdata)
 	  else if(ret = OS_SUCCESS)
 	  {
 	      AppUartProcessing(AppUartRx->buf,AppUartRx->recv_len);
-          printf("app uart(full):%d\r\n",AppUartRx->recv_len);
+          printf("[%s]:app uart(full):%d\r\n",__TIME__,AppUartRx->recv_len);
           AppUartRx->recv_len = 0;
 		  rx_full_flg = true;
 	  }
