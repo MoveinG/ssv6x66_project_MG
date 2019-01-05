@@ -15,7 +15,6 @@
 
 
 extern IEEE80211STATUS gwifistatus;
-extern dev_status_e devStatus;
 OsTimer cntTimeOut = NULL;
 deviceComm_t deviceCommMsg;
 
@@ -127,9 +126,7 @@ int32_t AT_SetModeProcessing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint8_t 
 			return CMD_ERROR;
 		}
 		if ((get_DUT_wifi_mode() == DUT_STA) && (deviceMode == DUT_AP)) {
-			if (devStatus != DEFAULT_STATUS) {
-				wifi_disconnect(NULL);
-			}
+			wifi_disconnect(NULL);
 			CIB.wifimode = DUT_AP;
 			CIBWrite();
 			DUT_wifi_start(DUT_AP);

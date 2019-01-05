@@ -1783,7 +1783,6 @@ void scan_cbfunc()
 
 extern OsTimer cntTimeOut;
 uint16_t cntErrorCode;
-dev_status_e devStatus = DEFAULT_STATUS;
 void atwificbfunc(WIFI_RSP *msg)
 {
     uint8_t dhcpen;
@@ -1816,7 +1815,6 @@ void atwificbfunc(WIFI_RSP *msg)
 				
 
 		recordAP();
-		devStatus = CONNECTED_AP;
 		if ((cntTimeOut) && (OS_TimerIsActive(cntTimeOut))) {
 			//OS_TimerDelete(cntTimeOut);
 			OS_TimerStop(cntTimeOut);
@@ -1825,7 +1823,6 @@ void atwificbfunc(WIFI_RSP *msg)
     }
     else
     {
-    	devStatus = DISCONNECT_AP;
     	if (deviceCommMsg.commSsl.magic == DEV_MAGIC) {
 			app_ssl_close(&(deviceCommMsg.commSsl));
 		} else if (deviceCommMsg.commTcp.magic == DEV_MAGIC) {

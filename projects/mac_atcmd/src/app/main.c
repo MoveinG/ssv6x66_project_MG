@@ -94,6 +94,8 @@ void wifi_auto_connect_task(void *pdata)
 				CIB.deviceIpConfig.devStaIpCfg.ip.u32,\
 				CIB.deviceIpConfig.devStaIpCfg.netmask.u32,\
 				CIB.deviceIpConfig.devStaIpCfg.gateway.u32, server);
+		write_wifi_config();
+		write_sys_config();
 		printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\r\n");
 		printf("ip:\"%d.%d.%d.%d\",getway:\"%d.%d.%d.%d\",mask:\"%d.%d.%d.%d\"\r\n",\
 				gwifistatus.connAP[0].ipconf.local_ip_addr.u8[0],\
