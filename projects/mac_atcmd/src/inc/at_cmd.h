@@ -263,8 +263,13 @@ typedef struct
 typedef struct
 {
    uint8_t ssid[SSID_STRINGS_MAX];
-   sec_type_t sectype;
+   uint8_t ssidLen;
    uint8_t seckey[SECURE_KEY_MAX];
+   uint8_t seckeyLen;
+   uint8_t sectype;
+   uint8_t secSubType;
+   uint8_t mac[6];
+   uint8_t channel;
 }ssid_info_t;
 
 typedef enum

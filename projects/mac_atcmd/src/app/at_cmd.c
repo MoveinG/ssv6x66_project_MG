@@ -84,7 +84,7 @@ void Serial2WiFiInit(void)
 	printf("fd:%d\r\n",fd);
 	app_uart_int();
     if (OS_TimerCreate(&cntTimeOut,5000, (unsigned char)0, NULL, (OsTimerHandler)connect_timeout_handler) != OS_SUCCESS) {
-         printf("[%s]:connect ap timer create error!\r\n",__TIME__);
+         printf("[%d]:connect ap timer create error!\r\n",__LINE__);
     }
 }
 
@@ -113,7 +113,7 @@ SSV_FILE CIBRead(void)
 		FS_write(fs_handle,fd,&CIB,sizeof(CIB));
 	}
 	FS_close(fs_handle,fd);
-	printf("[%s]:CIB read ok.\r\n",__TIME__);
+	printf("[%d]:CIB read ok.\r\n",__LINE__);
 	//return fd;
   }
   else
@@ -124,7 +124,7 @@ SSV_FILE CIBRead(void)
     {
       fd = FS_write(fs_handle,fd,&CIB,sizeof(CIB));
 	  FS_close(fs_handle,fd);
-	  printf("[%s]:CIB create and write ok.\r\n",__TIME__);
+	  printf("[%d]:CIB create and write ok.\r\n",__LINE__);
 	}
   }
   return fd;
@@ -140,7 +140,7 @@ SSV_FILE CIBWrite(void)
   	{
     	fd = FS_write(fs_handle,fd,&CIB,sizeof(CIB));
 		FS_close(fs_handle,fd);
-		printf("[%s]:CIB write ok.\r\n",__TIME__);
+		printf("[%d]:CIB write ok.\r\n",__LINE__);
   	}
 	return fd;
 }

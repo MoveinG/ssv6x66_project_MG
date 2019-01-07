@@ -1805,7 +1805,17 @@ void atwificbfunc(WIFI_RSP *msg)
         printf("default gateway - %d.%d.%d.%d\n", gateway.u8[0], gateway.u8[1], gateway.u8[2], gateway.u8[3]);
         printf("DNS server      - %d.%d.%d.%d\n", dnsserver.u8[0], dnsserver.u8[1], dnsserver.u8[2], dnsserver.u8[3]);
 
+		memcpy(CIB.stainfo.ssid,gwifistatus.connAP[0].ssid,gwifistatus.connAP[0].ssid_len);
+		memcpy(CIB.stainfo.seckey,gwifistatus.connAP[0].key,gwifistatus.connAP[0].key_len);
+		memcpy(CIB.stainfo.mac,gwifistatus.connAP[0].mac,6);
+		CIB.stainfo.ssidLen    = gwifistatus.connAP[0].ssid_len;
+		CIB.stainfo.seckeyLen  = gwifistatus.connAP[0].key_len;
+		CIB.stainfo.channel    = gwifistatus.connAP[0].channel;
+		CIB.stainfo.sectype    = gwifistatus.connAP[0].security_type;
+		CIB.stainfo.secSubType = gwifistatus.connAP[0].security_subType;
+
 		recordAP();
+		CIBWrite();
 		if ((cntTimeOut) && (OS_TimerIsActive(cntTimeOut))) {
 			OS_TimerStop(cntTimeOut);
 			app_uart_send("OK\r\n",strlen("OK\r\n"));
@@ -1818,10 +1828,13 @@ void atwificbfunc(WIFI_RSP *msg)
 		} else if (deviceCommMsg.commTcp.magic == DEV_MAGIC) {
 			app_tcp_close(&(deviceCommMsg.commTcp));
 		}
+		if ((msg->reason == AP_MISSING) && (CIB.autoConnectEn)) {
+			app_wifi_auto_connect();
+		}
 		app_uart_send("WIFI DISCONNECT\r\n",strlen("WIFI DISCONNECT\r\n"));
     }
 
-	printf("[%s]:wifiMode:%d,reason:%d,code:%d\r\n",__TIME__,msg->wifistatus,msg->reason,msg->code);
+	printf("[%d]:wifiMode:%d,reason:%d,code:%d\r\n",__LINE__,msg->wifistatus,msg->reason,msg->code);
 }
 
 int At_Reboot (stParam *param)

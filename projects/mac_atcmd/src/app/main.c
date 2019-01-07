@@ -19,11 +19,13 @@
 #include "at_cmd.h"
 
 void Cli_Task( void *args );
+extern void atwificbfunc(WIFI_RSP *msg);
+
 
 
 /**********************************************************/
 SSV_FS fs_handle = NULL;
-
+OsTaskHandle appAutoCntTaskHandle;
 extern IEEE80211STATUS gwifistatus;
 void wifirspcbfunc(WIFI_RSP *msg)
 {
@@ -70,37 +72,82 @@ void tcptask(void *args)
 	OS_TaskDelete(NULL);
 }
 
+void app_wifi_auto_connect_task(void *args)
+{
+	printf("[%d]:auto connect en = %d,\n\
+	    wifi status  = %d,\n\
+	    ssid         = %s,\n\
+	    key          = %s,\n\
+	    channel      = %d,\n\
+	    mac          = %02x:%02x:%02x:%02x:%02x:%02x.\r\n",\
+		__LINE__,\
+		CIB.autoConnectEn,get_wifi_status(),\
+		CIB.stainfo.ssid,\
+		CIB.stainfo.seckey,\
+		CIB.stainfo.channel,\
+		CIB.stainfo.mac[0],\
+		CIB.stainfo.mac[1],\
+		CIB.stainfo.mac[2],\
+		CIB.stainfo.mac[3],\
+		CIB.stainfo.mac[4],\
+		CIB.stainfo.mac[5]);
+	if ((CIB.autoConnectEn) && (get_wifi_status() == 0)) {
+		wifi_connect_active_3( CIB.stainfo.ssid,\
+								CIB.stainfo.ssidLen,\
+								CIB.stainfo.seckey,\
+								CIB.stainfo.seckeyLen,\
+								CIB.stainfo.sectype,\
+								CIB.stainfo.channel,\
+								CIB.stainfo.mac,\
+								atwificbfunc);
+		
+		//wifi_connect_active(CIB.stainfo.ssid,\
+							CIB.stainfo.ssidLen,\
+							CIB.stainfo.seckey,\
+							CIB.stainfo.seckeyLen,\
+							atwificbfunc);
+	}
+	printf("[%d]:app wifi auto connect task delete!\r\n",__LINE__);
+	vTaskDelete(NULL);
+}
+
+void app_wifi_auto_connect(void)
+{
+	int ret = OS_TaskCreate(app_wifi_auto_connect_task, "app_wifi_auto_connect", 1024, NULL, tskIDLE_PRIORITY + 2, NULL);
+    printf("[%d]:app_wifi_auto_connect\r\n",__LINE__);
+}
+
+
 void wifi_auto_connect_task(void *pdata)
 {  
-	if (CIB.autoConnectEn) {
-		set_auto_connect_flag(1);
-	} else if (CIB.autoConnectEn == 0) {
-		set_auto_connect_flag(0);
-	}
-
-	if (CIB.deviceIpConfig.devStaIpCfg.dhcpEn == 0) {
-		uint32_t server = 0;
-		if (CIB.deviceIpConfig.devStaIpCfg.dnsEN) {
-			server = CIB.deviceIpConfig.devStaIpCfg.dns.u32;
-			gwifistatus.connAP[0].ipconf.dns_server.u32 = server;
-		}
-		gwifistatus.connAP[0].ipconf.dhcp_enable = 0;
-		set_if_config(CIB.deviceIpConfig.devStaIpCfg.dhcpEn,\
-				CIB.deviceIpConfig.devStaIpCfg.ip.u32,\
-				CIB.deviceIpConfig.devStaIpCfg.netmask.u32,\
-				CIB.deviceIpConfig.devStaIpCfg.gateway.u32, server);
-		write_wifi_config();
-		read_wifi_config();
-	} else {
-		gwifistatus.connAP[0].ipconf.dhcp_enable = 1;
-	}
-    if( get_auto_connect_flag() == 1 )
-    {
-        printf("run wifi_auto_connect_task\n");
-        OS_MsDelay(3*1000);
+    if (CIB.autoConnectEn == 1) {
         DUT_wifi_start(DUT_STA);
         OS_MsDelay(1*1000);
-        do_wifi_auto_connect();
+		printf("[%d]:auto connect enable.\r\n",__LINE__);
+		gwifistatus.connAP[0].ipconf.dhcp_enable = CIB.deviceIpConfig.devStaIpCfg.dhcpEn;
+		
+		if (CIB.deviceIpConfig.devStaIpCfg.dhcpEn == 0) {
+		   printf("[%d]:dhcp enable.\r\n",__LINE__);
+		   if (CIB.deviceIpConfig.devStaIpCfg.dnsEN) {
+			   printf("[%d]:dns enable.\r\n",__LINE__);
+			   gwifistatus.connAP[0].ipconf.dns_server.u32 = CIB.deviceIpConfig.devStaIpCfg.dns.u32;
+			}
+			set_if_config(CIB.deviceIpConfig.devStaIpCfg.dhcpEn,\
+				CIB.deviceIpConfig.devStaIpCfg.ip.u32,\
+				CIB.deviceIpConfig.devStaIpCfg.netmask.u32,\
+				CIB.deviceIpConfig.devStaIpCfg.gateway.u32,\
+				CIB.deviceIpConfig.devStaIpCfg.dns.u32);
+		}
+		//app_wifi_auto_connect();
+		wifi_connect_active_3( CIB.stainfo.ssid,\
+								CIB.stainfo.ssidLen,\
+								CIB.stainfo.seckey,\
+								CIB.stainfo.seckeyLen,\
+								CIB.stainfo.sectype,\
+								CIB.stainfo.channel,\
+								CIB.stainfo.mac,\
+								atwificbfunc);
+
     }
     
     OS_TaskDelete(NULL);
@@ -131,6 +178,10 @@ void ssvradio_init_task(void *pdata)
 #ifdef TCPIPSTACK_EN
     netstack_init(CIB.hostName);
 #endif
+
+	init_global_conf();
+	OS_TaskCreate(wifi_auto_connect_task, "wifi_auto_connect", 1024, NULL, tskIDLE_PRIORITY + 2, NULL);
+
     OS_TaskDelete(NULL);
 }
 
@@ -176,8 +227,8 @@ void APP_Init(void)
     OS_TaskCreate(temperature_compensation_task, "rf temperature compensation", 256, NULL, tskIDLE_PRIORITY + 2, NULL);
 #endif
 
-    init_global_conf();
-    OS_TaskCreate(wifi_auto_connect_task, "wifi_auto_connect", 1024, NULL, tskIDLE_PRIORITY + 2, NULL);
+    //init_global_conf();
+    //OS_TaskCreate(wifi_auto_connect_task, "wifi_auto_connect", 1024, NULL, tskIDLE_PRIORITY + 2, NULL);
 
     OS_StartScheduler();
 }

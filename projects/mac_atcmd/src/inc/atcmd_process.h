@@ -29,6 +29,7 @@ int32_t AT_Close_Comm_Processing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint
 
 
 void connect_timeout_handler(void);
+void app_wifi_auto_connect(void);
 
 
 
