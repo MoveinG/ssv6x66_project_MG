@@ -80,22 +80,21 @@ void wifi_auto_connect_task(void *pdata)
         DUT_wifi_start(DUT_STA);
         OS_MsDelay(1*1000);
 		printf("[%d]:auto connect enable.\r\n",__LINE__);
-		gwifistatus.connAP[0].ipconf.dhcp_enable = CIB.deviceIpConfig.devStaIpCfg.dhcpEn;
 		
 		if (CIB.deviceIpConfig.devStaIpCfg.dhcpEn == 0) {
-		   printf("[%d]:dhcp enable.\r\n",__LINE__);
-		   if (CIB.deviceIpConfig.devStaIpCfg.dnsEN) {
-			   printf("[%d]:dns enable.\r\n",__LINE__);
-			   gwifistatus.connAP[0].ipconf.dns_server.u32 = CIB.deviceIpConfig.devStaIpCfg.dns.u32;
-			}
-			set_if_config(CIB.deviceIpConfig.devStaIpCfg.dhcpEn,\
-				CIB.deviceIpConfig.devStaIpCfg.ip.u32,\
-				CIB.deviceIpConfig.devStaIpCfg.netmask.u32,\
-				CIB.deviceIpConfig.devStaIpCfg.gateway.u32,\
-				CIB.deviceIpConfig.devStaIpCfg.dns.u32);
+			printf("[%d]:dhcp enable.\r\n",__LINE__);
+		   	if (CIB.deviceIpConfig.devStaIpCfg.dnsEN) {
+				printf("[%d]:dns enable.\r\n",__LINE__);
+			   	gwifistatus.connAP[0].ipconf.dns_server.u32 = CIB.deviceIpConfig.devStaIpCfg.dns.u32;
+		   	}
+		   	set_if_config(CIB.deviceIpConfig.devStaIpCfg.dhcpEn,\
+		   	CIB.deviceIpConfig.devStaIpCfg.ip.u32,\
+		   	CIB.deviceIpConfig.devStaIpCfg.netmask.u32,\
+		   	CIB.deviceIpConfig.devStaIpCfg.gateway.u32,\
+		   	CIB.deviceIpConfig.devStaIpCfg.dns.u32);
+		   	gwifistatus.connAP[0].ipconf.dhcp_enable = CIB.deviceIpConfig.devStaIpCfg.dhcpEn;
 		}
 		do_wifi_auto_connect();
-
     }
     
     OS_TaskDelete(NULL);
@@ -157,12 +156,10 @@ void APP_Init(void)
 	OS_PsramInit();
 
 	fs_handle = FS_init();
-	printf("[%d]:fs handle=%d.\r\n",__LINE__,fs_handle);
 	if(fs_handle)
 	{
 		FS_remove_prevota(fs_handle);
 	}
-	printf("[%d]:fs handle=%d.\r\n",__LINE__,fs_handle);
     
 	Serial2WiFiInit();
 #if 1
