@@ -119,7 +119,7 @@ SSV_FILE CIBRead(void)
   else
   {
   	CIBInit();
-    fd = FS_open(fs_handle,CIB_FILE_NAME,SPIFFS_CREAT | SPIFFS_RDWR,0);
+    fd = FS_open(fs_handle,CIB_FILE_NAME,SPIFFS_CREAT | SPIFFS_RDWR | SPIFFS_TRUNC,0);
 	if(fd >= 0)
     {
       fd = FS_write(fs_handle,fd,&CIB,sizeof(CIB));
@@ -134,14 +134,15 @@ SSV_FILE CIBWrite(void)
 {
 	SSV_FILE fd;
 
-  	fd = FS_open(fs_handle,CIB_FILE_NAME,SPIFFS_RDWR,0);
-  	//printf("%s fd=%d\r\n",__func__,fd);
+  	fd = FS_open(fs_handle,CIB_FILE_NAME,SPIFFS_RDWR | SPIFFS_TRUNC | SPIFFS_CREAT,0);
+  	
   	if(fd >= 0)
   	{
     	fd = FS_write(fs_handle,fd,&CIB,sizeof(CIB));
 		FS_close(fs_handle,fd);
 		printf("[%d]:CIB write ok.\r\n",__LINE__);
   	}
+	printf("[%s]:fd=%d,CIB size:%d\r\n",__func__,fd,sizeof(CIB));
 	return fd;
 }
 

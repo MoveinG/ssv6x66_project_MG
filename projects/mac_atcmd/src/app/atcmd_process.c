@@ -270,7 +270,7 @@ int32_t AT_AutoConnectProcessing(uint8_t *pBuf,uint16_t len,uint8_t paraNum,uint
 			CIB.autoConnectEn = params[0][0] - '0';
 			CIBWrite();
 			if (get_wifi_status() == 0) {
-				app_wifi_auto_connect();
+				//app_wifi_auto_connect();
 			}
 			return CMD_SUCCESS;
 		}

@@ -1829,7 +1829,7 @@ void atwificbfunc(WIFI_RSP *msg)
 			app_tcp_close(&(deviceCommMsg.commTcp));
 		}
 		if ((msg->reason == AP_MISSING) && (CIB.autoConnectEn)) {
-			app_wifi_auto_connect();
+			//app_wifi_auto_connect();
 		}
 		app_uart_send("WIFI DISCONNECT\r\n",strlen("WIFI DISCONNECT\r\n"));
     }
