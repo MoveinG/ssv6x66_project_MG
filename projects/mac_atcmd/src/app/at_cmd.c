@@ -112,8 +112,8 @@ SSV_FILE CIBRead(void)
 		CIBInit();
 		FS_write(fs_handle,fd,&CIB,sizeof(CIB));
 	}
-	FS_close(fs_handle,fd);
-	printf("[%d]:CIB read ok.\r\n",__LINE__);
+	int ret = FS_close(fs_handle,fd);
+	printf("[%d]:CIB read ok fs_handle=%d ret=%d.\r\n",__LINE__,fs_handle,ret);
 	//return fd;
   }
   else
@@ -123,8 +123,8 @@ SSV_FILE CIBRead(void)
 	if(fd >= 0)
     {
       fd = FS_write(fs_handle,fd,&CIB,sizeof(CIB));
-	  FS_close(fs_handle,fd);
-	  printf("[%d]:CIB create and write ok.\r\n",__LINE__);
+	  int ret = FS_close(fs_handle,fd);
+	  printf("[%d]:CIB create and write ok fs_handle=%d ret=%d.\r\n",__LINE__,fs_handle,ret);
 	}
   }
   return fd;
@@ -134,15 +134,15 @@ SSV_FILE CIBWrite(void)
 {
 	SSV_FILE fd;
 
-  	fd = FS_open(fs_handle,CIB_FILE_NAME,SPIFFS_RDWR | SPIFFS_TRUNC | SPIFFS_CREAT,0);
+  	fd = FS_open(fs_handle,CIB_FILE_NAME,SPIFFS_RDWR | SPIFFS_APPEND,0);
   	
   	if(fd >= 0)
   	{
     	fd = FS_write(fs_handle,fd,&CIB,sizeof(CIB));
-		FS_close(fs_handle,fd);
-		printf("[%d]:CIB write ok.\r\n",__LINE__);
+		int ret = FS_close(fs_handle,fd);
+		printf("[%d]:CIB write ok fs_handle=%d ret=%d.\r\n",__LINE__,fs_handle,ret);
   	}
-	printf("[%s]:fd=%d,CIB size:%d\r\n",__func__,fd,sizeof(CIB));
+	printf("[%s]:fd=%d fs_handle=%d.\r\n",__func__,fd,fs_handle);
 	return fd;
 }
 

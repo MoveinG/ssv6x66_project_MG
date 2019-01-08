@@ -157,14 +157,14 @@ void APP_Init(void)
 	OS_PsramInit();
 
 	fs_handle = FS_init();
+	printf("[%d]:fs handle=%d.\r\n",__LINE__,fs_handle);
 	if(fs_handle)
 	{
 		FS_remove_prevota(fs_handle);
 	}
-    //add by eaton at 2018.9.20
+	printf("[%d]:fs handle=%d.\r\n",__LINE__,fs_handle);
+    
 	Serial2WiFiInit();
-
-	//add end
 #if 1
     OS_TaskCreate(Cli_Task, "cli", 1024, NULL, 1, NULL);
 #endif
