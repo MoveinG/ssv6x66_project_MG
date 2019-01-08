@@ -101,33 +101,30 @@ void Serial2WiFiInit(void)
 ******************************************************************************/
 SSV_FILE CIBRead(void)
 {
-  SSV_FILE fd;
+  	SSV_FILE fd;
 
-  fd = FS_open(fs_handle,CIB_FILE_NAME,SPIFFS_RDWR,0);
-  //printf("%s fd=%d\r\n",__func__,fd);
-  if(fd >= 0)
-  {
-    fd = FS_read(fs_handle,fd,&CIB,sizeof(CIB));
-	if (CIB.magic != DEV_MAGIC) {
-		CIBInit();
-		FS_write(fs_handle,fd,&CIB,sizeof(CIB));
-	}
-	int ret = FS_close(fs_handle,fd);
-	printf("[%d]:CIB read ok fs_handle=%d ret=%d.\r\n",__LINE__,fs_handle,ret);
-	//return fd;
-  }
-  else
-  {
-  	CIBInit();
-    fd = FS_open(fs_handle,CIB_FILE_NAME,SPIFFS_CREAT | SPIFFS_RDWR | SPIFFS_TRUNC,0);
-	if(fd >= 0)
-    {
-      fd = FS_write(fs_handle,fd,&CIB,sizeof(CIB));
-	  int ret = FS_close(fs_handle,fd);
-	  printf("[%d]:CIB create and write ok fs_handle=%d ret=%d.\r\n",__LINE__,fs_handle,ret);
-	}
-  }
-  return fd;
+  	fd = FS_open(fs_handle,CIB_FILE_NAME,SPIFFS_RDWR,0);
+  	if (fd >= 0) {
+  	 	FS_read(fs_handle,fd,&CIB,sizeof(CIB));
+	 	if (CIB.magic != DEV_MAGIC) {
+			CIBInit();
+			FS_write(fs_handle,fd,&CIB,sizeof(CIB));
+		}
+		if (FS_close(fs_handle,fd) == 0) {
+			printf("[%d]:CIB read ok\r\n",__LINE__);
+		}
+  	} else {
+  		CIBInit();
+    	fd = FS_open(fs_handle,CIB_FILE_NAME,SPIFFS_CREAT | SPIFFS_RDWR | SPIFFS_TRUNC,0);
+		if (fd >= 0) {
+    		if (FS_write(fs_handle,fd,&CIB,sizeof(CIB)) > 0) {
+				if (FS_close(fs_handle,fd) == 0) {
+					printf("[%d]:CIB write ok.\r\n",__LINE__);
+				}
+    		}
+		}
+  	}
+  	return fd;
 }
 
 SSV_FILE CIBWrite(void)
@@ -135,14 +132,13 @@ SSV_FILE CIBWrite(void)
 	SSV_FILE fd;
 
   	fd = FS_open(fs_handle,CIB_FILE_NAME,SPIFFS_RDWR | SPIFFS_APPEND,0);
-  	
-  	if(fd >= 0)
-  	{
-    	fd = FS_write(fs_handle,fd,&CIB,sizeof(CIB));
-		int ret = FS_close(fs_handle,fd);
-		printf("[%d]:CIB write ok fs_handle=%d ret=%d.\r\n",__LINE__,fs_handle,ret);
+  	if (fd >= 0) {
+    	if (FS_write(fs_handle,fd,&CIB,sizeof(CIB)) > 0) {
+			if (FS_close(fs_handle,fd) == 0) {
+				printf("[%d]:CIB write ok.\r\n",__LINE__);
+			}
+    	}
   	}
-	printf("[%s]:fd=%d fs_handle=%d.\r\n",__func__,fd,fs_handle);
 	return fd;
 }
 

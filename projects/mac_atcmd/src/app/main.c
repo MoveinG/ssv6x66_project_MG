@@ -157,12 +157,10 @@ void APP_Init(void)
 	OS_PsramInit();
 
 	fs_handle = FS_init();
-	printf("[%d]:fs handle=%d.\r\n",__LINE__,fs_handle);
 	if(fs_handle)
 	{
 		FS_remove_prevota(fs_handle);
 	}
-	printf("[%d]:fs handle=%d.\r\n",__LINE__,fs_handle);
     
 	Serial2WiFiInit();
 #if 1
